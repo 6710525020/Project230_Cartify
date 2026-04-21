@@ -1,0 +1,61 @@
+<!-- =====================================================
+PACK E (1/3) : staff.html
+===================================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Staff Panel - Cartify</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body onload="loadStaffOrders()">
+
+<header class="topbar">
+
+<div class="brand">Cartify</div>
+
+<nav class="menu">
+<a href="index.html">Home</a>
+<a href="staff.html">Staff</a>
+<a href="history.html">Orders</a>
+</nav>
+
+</header>
+
+<div class="container">
+
+<section class="section">
+
+<h1 class="section-title">Order Management</h1>
+
+<div class="table-box">
+
+<table>
+<thead>
+<tr>
+<th>Order ID</th>
+<th>Customer</th>
+<th>Total</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="staff-orders"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+</div>
+
+<footer class="footer">
+© 2026 Cartify
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

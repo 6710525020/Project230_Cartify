@@ -1,0 +1,70 @@
+<!-- =====================================================
+PACK D (1/4) : cart.html
+===================================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cartify Cart</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body onload="renderCart()">
+
+<header class="topbar">
+
+<div class="brand">Cartify</div>
+
+<div class="search-box">
+<input type="text" placeholder="Search products...">
+<button>⌕</button>
+</div>
+
+<nav class="menu">
+<a href="index.html">Home</a>
+<a href="shop.html">Shop</a>
+<a href="history.html">Orders</a>
+<a href="cart.html">Cart</a>
+</nav>
+
+</header>
+
+<div class="container">
+
+<section class="cart-page">
+
+<!-- LEFT -->
+<div>
+
+<h1 class="section-title">Your Cart</h1>
+
+<div id="cart-items"></div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="summary-box">
+
+<h2>Total</h2>
+
+<div class="total-price">
+฿<span id="total">0</span>
+</div>
+
+<button class="btn-main full" onclick="checkout()">
+Checkout
+</button>
+
+</div>
+
+</section>
+
+</div>
+
+<footer class="footer">
+© 2026 Cartify
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

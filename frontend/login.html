@@ -1,0 +1,42 @@
+<!-- =====================================================
+PACK D (2/4) : login.html
+===================================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Login - Cartify</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-wrap auth-blue">
+
+<div class="auth-card">
+
+<h1>Login</h1>
+
+<input type="text" placeholder="Username" id="login-user">
+
+<input type="password" placeholder="Password" id="login-pass">
+
+<select id="role">
+<option value="customer">Customer</option>
+<option value="staff">Staff</option>
+<option value="admin">Admin</option>
+<option value="manager">Manager</option>
+</select>
+
+<button class="btn-main full" onclick="loginUser()">
+Login
+</button>
+
+<p>
+Don't have an account?
+<a href="register.html">Register</a>
+</p>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

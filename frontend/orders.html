@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body onload="loadOrders()">
+
+<header class="topbar">
+<div class="brand">SmartStore</div>
+
+<nav class="menu">
+<a href="index.html">หน้าแรก</a>
+<a href="customer.html">บัญชี</a>
+</nav>
+</header>
+
+<section class="section">
+
+<h2>คำสั่งซื้อของฉัน</h2>
+
+<table class="order-table">
+<thead>
+<tr>
+<th>Order ID</th>
+<th>Date</th>
+<th>Total</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="orders-list"></tbody>
+
+</table>
+
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
