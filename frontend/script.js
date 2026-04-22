@@ -2,10 +2,10 @@
 PACK API A
 script.js
 Cartify Frontend -> Backend Connected
-API BASE = http://localhost:3000
+API BASE = http://localhost:8000
 ================================================== */
 
-const API = "http://localhost:3000/api";
+const API = "http://localhost:8000/api";
 
 /* ===============================
 HELPERS
@@ -41,11 +41,11 @@ const username = document.getElementById("username").value;
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
 
-const res = await fetch(API + "/customers/register",{
+const res = await fetch(API + "/auth/register",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
-cname:username,
+name:username,
 email:email,
 password:password
 })
@@ -53,8 +53,12 @@ password:password
 
 const data = await res.json();
 
-alert(data.message || "Register Success");
-location.href="login.html";
+if(data.token){
+  alert("Register Success");
+  location.href="login.html";
+}else{
+  alert(data.error || "Register Failed");
+}
 }
 
 /* ===============================
@@ -66,7 +70,7 @@ async function loginUser(){
 const email = document.getElementById("username").value;
 const password = document.getElementById("password").value;
 
-const res = await fetch(API + "/customers/login",{
+const res = await fetch(API + "/auth/login",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
@@ -83,7 +87,7 @@ localStorage.setItem("user", JSON.stringify(data.user || {}));
 alert("Login Success");
 location.href="index.html";
 }else{
-alert(data.message || "Login Failed");
+alert(data.error || "Login Failed");
 }
 
 }
@@ -251,12 +255,46 @@ alert("Cart Empty");
 return;
 }
 
+// Get payment information
+const address = document.getElementById("address")?.value || "";
+const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "debit";
+
+if(!address.trim()){
+alert("Please enter a delivery address");
+return;
+}
+
+// Prepare order data
+const orderData = {
+items: cart,
+address: address,
+paymentMethod: paymentMethod
+};
+
+// Add card details if paying by debit
+if(paymentMethod === "debit"){
+const cardName = document.getElementById("cardName")?.value || "";
+const cardNumber = document.getElementById("cardNumber")?.value || "";
+const cardExpiry = document.getElementById("cardExpiry")?.value || "";
+const cardCVV = document.getElementById("cardCVV")?.value || "";
+
+if(!cardName || !cardNumber || !cardExpiry || !cardCVV){
+alert("Please fill in all card details");
+return;
+}
+
+orderData.cardInfo = {
+cardName: cardName,
+cardNumber: cardNumber.slice(-4), // Only store last 4 digits
+cardExpiry: cardExpiry,
+cardCVV: cardCVV
+};
+}
+
 const res = await fetch(API + "/orders",{
 method:"POST",
 headers:authHeaders(),
-body:JSON.stringify({
-items:cart
-})
+body:JSON.stringify(orderData)
 });
 
 const data = await res.json();
@@ -275,6 +313,37 @@ ORDER HISTORY
 async function loadHistory(){
 
 const wrap = document.getElementById("history-body");
+if(!wrap) return;
+
+const res = await fetch(API + "/orders",{
+headers:authHeaders()
+});
+
+const rows = await res.json();
+
+wrap.innerHTML = "";
+
+rows.forEach(r=>{
+
+wrap.innerHTML += `
+<tr>
+<td>${r.order_id}</td>
+<td>${r.order_date}</td>
+<td>฿${r.total_price}</td>
+<td>${r.status}</td>
+</tr>
+`;
+
+});
+
+}
+
+/* ===============================
+LOAD ORDERS (for history.html)
+=============================== */
+async function loadOrders(){
+
+const wrap = document.getElementById("orders-list");
 if(!wrap) return;
 
 const res = await fetch(API + "/orders",{

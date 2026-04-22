@@ -15,12 +15,21 @@ async function recalcTotal(order_id) {
 
 async function getAll(req, res, next) {
   try {
-    const rows = await db.all2(`
+    let query = `
       SELECT o.*, c.cname, a.aname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
       LEFT JOIN Admin a    ON a.admin_id    = o.admin_id
-    `);
+    `;
+    let params = [];
+    
+    // If user is a customer, only show their orders
+    if (req.user.role === 'customer') {
+      query += ` WHERE o.customer_id = ?`;
+      params = [req.user.id];
+    }
+    
+    const rows = await db.all2(query, params);
     res.json(rows);
   } catch (err) { next(err); }
 }
@@ -49,30 +58,32 @@ async function getOne(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    const { customer_id, admin_id, items } = req.body;
-    if (!customer_id || !Array.isArray(items) || items.length === 0)
-      return res.status(400).json({ error: 'customer_id and items[] required' });
+    const { items, address, paymentMethod } = req.body;
+    const customer_id = req.user.id; // Get from authenticated token
+    
+    if (!Array.isArray(items) || items.length === 0)
+      return res.status(400).json({ error: 'items[] required' });
 
     // Validate items
     for (const item of items) {
-      if (!item.product_id || !item.count)
-        return res.status(400).json({ error: 'Each item needs product_id and count' });
+      if (!item.product_id || !item.qty)
+        return res.status(400).json({ error: 'Each item needs product_id and qty' });
     }
 
     const { lastID: order_id } = await db.run2(
-      `INSERT INTO "Order" (customer_id, admin_id) VALUES (?,?)`,
-      [customer_id, admin_id ?? null]
+      `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method) VALUES (?,?,?,?)`,
+      [customer_id, null, address || null, paymentMethod || 'debit']
     );
 
     for (const item of items) {
       await db.run2(
         'INSERT INTO OrderItem (order_id, product_id, count) VALUES (?,?,?)',
-        [order_id, item.product_id, item.count]
+        [order_id, item.product_id, item.qty]
       );
     }
 
     const total_price = await recalcTotal(order_id);
-    res.status(201).json({ order_id, total_price });
+    res.status(201).json({ message: 'Order created successfully', order_id, total_price });
   } catch (err) { next(err); }
 }
 

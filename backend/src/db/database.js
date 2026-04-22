@@ -71,13 +71,16 @@ const SCHEMA = `
   );
 
   CREATE TABLE IF NOT EXISTS "Order" (
-    order_id    INTEGER PRIMARY KEY AUTOINCREMENT,
-    customer_id INTEGER NOT NULL,
-    admin_id    INTEGER,
-    order_date  TEXT    NOT NULL DEFAULT (DATE('now')),
-    status      TEXT    NOT NULL DEFAULT 'pending'
-                        CHECK (status IN ('pending','processing','completed','cancelled')),
-    total_price REAL    NOT NULL DEFAULT 0,
+    order_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id      INTEGER NOT NULL,
+    admin_id         INTEGER,
+    order_date       TEXT    NOT NULL DEFAULT (DATE('now')),
+    status           TEXT    NOT NULL DEFAULT 'pending'
+                             CHECK (status IN ('pending','processing','completed','cancelled')),
+    total_price      REAL    NOT NULL DEFAULT 0,
+    delivery_address TEXT,
+    payment_method   TEXT    DEFAULT 'debit'
+                             CHECK (payment_method IN ('debit','cod')),
     FOREIGN KEY (customer_id) REFERENCES Customer(customer_id) ON DELETE RESTRICT,
     FOREIGN KEY (admin_id)    REFERENCES Admin(admin_id)        ON DELETE SET NULL
   );
