@@ -1,9 +1,9 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://project230-cartify.onrender.com'
+const API = import.meta.env.VITE_API_URL || 'http://project230-cartify.onrender.com'
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 })
