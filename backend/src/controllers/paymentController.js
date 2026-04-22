@@ -1,4 +1,3 @@
-// src/controllers/paymentController.js
 const db = require('../db/database');
 
 async function getAll(req, res, next) {

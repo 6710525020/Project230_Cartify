@@ -1,4 +1,3 @@
-// src/middleware/auth.js
 const jwt = require('jsonwebtoken');
 
 const SECRET = process.env.JWT_SECRET || 'changeme';
@@ -31,4 +30,14 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authenticate, requireRole };
+/** Allow if requester owns the resource or has one of the allowed roles */
+function requireSelfOrRole(paramName = 'id', ...roles) {
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    if (roles.includes(req.user.role)) return next();
+    if (String(req.user.id) === String(req.params[paramName])) return next();
+    return res.status(403).json({ error: 'Forbidden' });
+  };
+}
+
+module.exports = { authenticate, requireRole, requireSelfOrRole };

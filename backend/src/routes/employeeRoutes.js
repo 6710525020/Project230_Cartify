@@ -1,4 +1,3 @@
-// src/routes/employeeRoutes.js
 const router = require('express').Router();
 const ctrl = require('../controllers/employeeController');
 const { authenticate, requireRole } = require('../middleware/auth');

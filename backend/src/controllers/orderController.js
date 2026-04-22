@@ -1,4 +1,3 @@
-// src/controllers/orderController.js
 const db = require('../db/database');
 
 async function recalcTotal(order_id) {
@@ -44,6 +43,9 @@ async function getOne(req, res, next) {
       WHERE o.order_id = ?
     `, [req.params.id]);
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (req.user.role === 'customer' && String(order.customer_id) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const items = await db.all2(`
       SELECT oi.*, p.pname, p.price
@@ -116,6 +118,11 @@ async function addItem(req, res, next) {
     const { product_id, count } = req.body;
     if (!product_id || !count)
       return res.status(400).json({ error: 'product_id and count required' });
+    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = ?', [order_id]);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (String(order.customer_id) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const existing = await db.get2(
       'SELECT count FROM OrderItem WHERE order_id = ? AND product_id = ?',
@@ -140,6 +147,11 @@ async function addItem(req, res, next) {
 async function removeItem(req, res, next) {
   try {
     const { id: order_id, productId: product_id } = req.params;
+    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = ?', [order_id]);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (String(order.customer_id) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const { changes } = await db.run2(
       'DELETE FROM OrderItem WHERE order_id = ? AND product_id = ?',
       [order_id, product_id]

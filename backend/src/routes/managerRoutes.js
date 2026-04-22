@@ -1,4 +1,3 @@
-// src/routes/managerRoutes.js
 const router = require('express').Router();
 const ctrl = require('../controllers/managerController');
 const { authenticate, requireRole } = require('../middleware/auth');

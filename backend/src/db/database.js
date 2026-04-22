@@ -1,4 +1,3 @@
-// src/db/database.js
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
@@ -19,6 +18,7 @@ db.run2 = (sql, params = []) =>
       if (err) reject(err);
       else resolve({ lastID: this.lastID, changes: this.changes });
     })
+    
   );
 
 db.all2 = (sql, params = []) =>
@@ -41,7 +41,9 @@ const SCHEMA = `
 
   CREATE TABLE IF NOT EXISTS Manager (
     manager_id  INTEGER PRIMARY KEY AUTOINCREMENT,
-    mname       TEXT    NOT NULL
+    mname       TEXT    NOT NULL,
+    email       TEXT    UNIQUE,
+    password    TEXT
   );
 
   CREATE TABLE IF NOT EXISTS Admin (
@@ -67,6 +69,10 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS Product (
     product_id  INTEGER PRIMARY KEY AUTOINCREMENT,
     pname       TEXT    NOT NULL,
+    description TEXT,
+    category    TEXT,
+    image       TEXT,
+    stock       INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
     price       REAL    NOT NULL CHECK (price >= 0)
   );
 
@@ -130,7 +136,46 @@ const SCHEMA = `
 `;
 
 db.exec2(SCHEMA)
-  .then(() => console.log('✅  Schema ready'))
+  .then(async () => {
+    // Backward-compatible migrations for existing DB files.
+    async function ensureColumn(table, column, ddl) {
+      const cols = await db.all2(`PRAGMA table_info(${table})`);
+      if (!cols.some((c) => c.name === column)) {
+        await db.run2(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+      }
+    }
+
+    await ensureColumn('Manager', 'email', 'email TEXT');
+    await ensureColumn('Manager', 'password', 'password TEXT');
+    await db.run2('CREATE UNIQUE INDEX IF NOT EXISTS idx_manager_email ON Manager(email)');
+
+    await ensureColumn('Product', 'description', 'description TEXT');
+    await ensureColumn('Product', 'category', 'category TEXT');
+    await ensureColumn('Product', 'image', 'image TEXT');
+    await ensureColumn('Product', 'stock', 'stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0)');
+
+    const bcrypt = require('bcrypt');
+    //admin
+    const hash = await bcrypt.hash('admin1234', 10);
+    await db.run2(`
+      INSERT INTO Admin (aname, password)
+      SELECT ?, ?
+      WHERE NOT EXISTS (
+        SELECT 1 FROM Admin WHERE aname = ?
+    )
+    `, ['admin@gmail.com', hash, 'admin@gmail.com']);
+    //manager
+    const managerHash = await bcrypt.hash('manager1234', 10);
+    await db.run2(`
+    INSERT INTO Manager (mname, email, password)
+    SELECT ?, ?, ?
+    WHERE NOT EXISTS (
+     SELECT 1 FROM Manager WHERE email = ?
+   )
+    `, ['Manager1', 'manager@gmail.com', managerHash, 'manager@gmail.com']);
+
+    console.log('Schema ready');
+  })
   .catch((err) => { console.error('Schema error:', err.message); process.exit(1); });
 
 module.exports = db;

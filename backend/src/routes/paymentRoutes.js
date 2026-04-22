@@ -1,4 +1,3 @@
-// src/routes/paymentRoutes.js
 const router = require('express').Router();
 const ctrl = require('../controllers/paymentController');
 const { authenticate, requireRole } = require('../middleware/auth');
