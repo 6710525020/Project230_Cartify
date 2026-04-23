@@ -3,6 +3,30 @@ import { Plus, Pencil, Trash2, Users, Package, ShoppingBag, Search, X } from 'lu
 import { productsAPI, customersAPI, ordersAPI } from '../services/api'
 import { Button, Input, Select, Spinner, Table, Tr, Td, Modal, Badge, OrderStatusBadge, toast } from '../components/UI'
 
+function productName(product) {
+  return product.name || product.pname || ''
+}
+
+function customerName(customer) {
+  return customer.name || customer.cname || ''
+}
+
+function customerKey(customer) {
+  return customer._id || customer.id || customer.customer_id
+}
+
+function orderKey(order) {
+  return order._id || order.id || order.order_id
+}
+
+function orderCustomer(order) {
+  return order.shippingAddress?.name || order.cname || order.customer_name || '-'
+}
+
+function orderCreatedAt(order) {
+  return order.createdAt || order.orderDate || order.order_date || null
+}
+
 function ProductForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState(initial || { name: '', description: '', price: '', stock: '', category: '', image: '' })
   const [saving, setSaving] = useState(false)
@@ -121,9 +145,16 @@ export default function AdminPage() {
     { key: 'orders',    label: 'Orders',    icon: ShoppingBag },
   ]
 
-  const filteredProducts  = products.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()))
-  const filteredCustomers = customers.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase()))
-  const filteredOrders    = orders.filter(o => (o._id || o.id || '').includes(search) || o.shippingAddress?.name?.toLowerCase().includes(search.toLowerCase()))
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredProducts  = products.filter((p) => productName(p).toLowerCase().includes(normalizedSearch))
+  const filteredCustomers = customers.filter((c) => (
+    customerName(c).toLowerCase().includes(normalizedSearch) ||
+    String(c.email || '').toLowerCase().includes(normalizedSearch)
+  ))
+  const filteredOrders    = orders.filter((o) => (
+    String(orderKey(o) || '').includes(normalizedSearch) ||
+    orderCustomer(o).toLowerCase().includes(normalizedSearch)
+  ))
 
   return (
     <div className="mx-auto px-4 py-8 max-w-6xl">
@@ -167,9 +198,9 @@ export default function AdminPage() {
               {filteredProducts.map(p => (
                 <div key={p._id || p.id} className="items-center grid grid-cols-6 hover:bg-cream-50 px-5 py-4 border-cream-200 border-b">
                   <div className="bg-cream-200 rounded-xl w-10 h-10 overflow-hidden">
-                    {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : <div className="flex justify-center items-center w-full h-full text-xl">📦</div>}
+                    {p.image ? <img src={p.image} alt={productName(p)} className="w-full h-full object-cover" /> : <div className="flex justify-center items-center w-full h-full text-xl">📦</div>}
                   </div>
-                  <span className="font-display font-bold text-brown-800 text-sm">{p.name}</span>
+                  <span className="font-display font-bold text-brown-800 text-sm">{productName(p)}</span>
                   <span>{p.category ? <Badge color="yellow">{p.category}</Badge> : <span className="text-brown-300">-</span>}</span>
                   <span className="font-display font-extrabold text-brown-900">฿{p.price?.toLocaleString('th-TH')}</span>
                   <span className={`font-display font-bold text-sm ${p.stock === 0 ? 'text-red-500' : p.stock < 5 ? 'text-amber-600' : 'text-emerald-600'}`}>{p.stock}</span>
@@ -190,15 +221,15 @@ export default function AdminPage() {
                 ))}
               </div>
               {filteredCustomers.map(c => (
-                <div key={c._id || c.id} className="items-center grid grid-cols-5 hover:bg-cream-50 px-5 py-4 border-cream-200 border-b">
+                <div key={customerKey(c)} className="items-center grid grid-cols-5 hover:bg-cream-50 px-5 py-4 border-cream-200 border-b">
                   <div className="flex items-center gap-2">
-                    <div className="flex justify-center items-center bg-brown-800 rounded-full w-8 h-8 font-bold text-gold-400 text-xs">{c.name?.[0]?.toUpperCase()}</div>
-                    <span className="font-display font-bold text-brown-800 text-sm">{c.name}</span>
+                    <div className="flex justify-center items-center bg-brown-800 rounded-full w-8 h-8 font-bold text-gold-400 text-xs">{customerName(c)?.[0]?.toUpperCase()}</div>
+                    <span className="font-display font-bold text-brown-800 text-sm">{customerName(c)}</span>
                   </div>
                   <span className="text-brown-500 text-sm">{c.email}</span>
-                  <span className="text-brown-400 text-xs">{c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-'}</span>
+                  <span className="text-brown-400 text-xs">{c.createdAt || c.created_at ? new Date(c.createdAt || c.created_at).toLocaleDateString('th-TH') : '-'}</span>
                   <span className="text-brown-500 text-sm">{c.orderCount || 0}</span>
-                  <button onClick={() => setDelConfirm(c._id || c.id)} className="p-1.5 w-fit text-brown-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                  <button onClick={() => setDelConfirm(customerKey(c))} className="p-1.5 w-fit text-brown-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                 </div>
               ))}
             </div>
@@ -207,15 +238,16 @@ export default function AdminPage() {
           {tab === 'orders' && (
             <Table headers={['รหัส','ลูกค้า','รายการ','ยอดรวม','สถานะ','วันที่']}>
               {filteredOrders.map(o => {
-                const id = o._id || o.id
+                const id = orderKey(o)
+                const createdAt = orderCreatedAt(o)
                 return (
                   <Tr key={id}>
-                    <Td><span className="font-mono text-brown-500 text-xs">#{id?.slice(-8).toUpperCase()}</span></Td>
-                    <Td><span className="font-display font-bold text-brown-800">{o.shippingAddress?.name || '-'}</span></Td>
+                    <Td><span className="font-mono text-brown-500 text-xs">#{String(id || '').slice(-8).toUpperCase()}</span></Td>
+                    <Td><span className="font-display font-bold text-brown-800">{orderCustomer(o)}</span></Td>
                     <Td><span className="text-brown-500">{o.items?.length || 0} รายการ</span></Td>
-                    <Td><span className="font-display font-extrabold text-brown-900">฿{o.total?.toLocaleString('th-TH')}</span></Td>
+                    <Td><span className="font-display font-extrabold text-brown-900">฿{Number(o.total ?? o.total_price ?? 0).toLocaleString('th-TH')}</span></Td>
                     <Td><OrderStatusBadge status={o.status} /></Td>
-                    <Td><span className="text-brown-400 text-xs">{new Date(o.createdAt).toLocaleDateString('th-TH')}</span></Td>
+                    <Td><span className="text-brown-400 text-xs">{createdAt ? new Date(createdAt).toLocaleDateString('th-TH') : '-'}</span></Td>
                   </Tr>
                 )
               })}

@@ -96,22 +96,22 @@ export function Spinner({ size = 24 }) {
   )
 }
 
-export function Modal({ open, onClose, title, children, size = 'md' }) {
+export function Modal({ open, onClose, title, children, size = 'md', bodyClassName = '' }) {
   if (!open) return null
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
 
   return (
-    <div className="z-50 fixed inset-0 flex justify-center items-center p-4" onClick={onClose}>
+    <div className="z-50 fixed inset-0 flex justify-center items-center p-3 sm:p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-brown-950/40 backdrop-blur-sm" />
       <div
-        className={`relative w-full ${sizes[size]} bg-white rounded-3xl shadow-2xl`}
+        className={`relative flex max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] w-full ${sizes[size]} flex-col overflow-hidden rounded-3xl bg-white shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center px-7 py-5 border-cream-300 border-b">
+        <div className="flex justify-between items-center px-5 sm:px-7 py-4 sm:py-5 border-cream-300 border-b">
           <h2 className="font-display font-extrabold text-brown-900 text-xl">{title}</h2>
           <button onClick={onClose} className="flex justify-center items-center hover:bg-cream-300 rounded-full w-8 h-8 font-bold text-brown-500 hover:text-brown-800 text-xl transition-colors">X</button>
         </div>
-        <div className="px-7 py-6">{children}</div>
+        <div className={`overflow-y-auto px-5 sm:px-7 py-5 sm:py-6 ${bodyClassName}`}>{children}</div>
       </div>
     </div>
   )

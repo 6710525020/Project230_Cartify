@@ -14,6 +14,17 @@ function methodMeta(method) {
   return map[method] || map.cash
 }
 
+const provinceOptions = [
+  'Bangkok',
+  'Chiang Mai',
+  'Khon Kaen',
+  'Chonburi',
+  'Nakhon Ratchasima',
+  'Phuket',
+  'Songkhla',
+  'Surat Thani',
+]
+
 export default function CartPage() {
   const { items, total, loading, updateItem, removeItem, clearCart } = useCart()
   const navigate = useNavigate()
@@ -22,7 +33,7 @@ export default function CartPage() {
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [slipAttachment, setSlipAttachment] = useState('')
   const [slipName, setSlipName] = useState('')
-  const [address, setAddress] = useState({ name: '', phone: '', address: '', city: '' })
+  const [address, setAddress] = useState({ name: '', phone: '', address: '', city: provinceOptions[0], note: '' })
 
   const paymentInfo = useMemo(() => methodMeta(paymentMethod), [paymentMethod])
   const slipRequired = paymentMethod === 'promptpay'
@@ -144,14 +155,22 @@ export default function CartPage() {
         </div>
       )}
 
-      <Modal open={checkout} onClose={() => setCheckout(false)} title="Checkout & Payment" size="lg">
-        <form onSubmit={handlePlaceOrder} className="flex flex-col gap-6">
+      <Modal open={checkout} onClose={() => setCheckout(false)} title="Checkout & Payment" size="lg" bodyClassName="p-0">
+        <form onSubmit={handlePlaceOrder} className="flex flex-col">
+          <div className="space-y-5 px-5 sm:px-7 py-5 sm:py-6">
           <div className="gap-4 grid md:grid-cols-2">
             <Input label="Full Name" required value={address.name} onChange={(e) => setAddress((p) => ({ ...p, name: e.target.value }))} />
             <Input label="Phone Number" required value={address.phone} onChange={(e) => setAddress((p) => ({ ...p, phone: e.target.value }))} />
           </div>
           <Input label="Address" required value={address.address} onChange={(e) => setAddress((p) => ({ ...p, address: e.target.value }))} />
-          <Input label="City / Province" required value={address.city} onChange={(e) => setAddress((p) => ({ ...p, city: e.target.value }))} />
+          <div className="gap-4 grid md:grid-cols-2">
+            <Select label="Province" value={address.city} onChange={(e) => setAddress((p) => ({ ...p, city: e.target.value }))}>
+              {provinceOptions.map((province) => (
+                <option key={province} value={province}>{province}</option>
+              ))}
+            </Select>
+            <Input label="Delivery Note" placeholder="Building, floor, landmark" value={address.note} onChange={(e) => setAddress((p) => ({ ...p, note: e.target.value }))} />
+          </div>
 
           <div className="bg-cream-100 p-5 border border-cream-300 rounded-2xl">
             <div className="flex items-center gap-2 mb-4">
@@ -195,13 +214,14 @@ export default function CartPage() {
               {slipName && <p className="mt-2 font-body text-brown-500 text-xs">Attached: {slipName}</p>}
             </div>
           </div>
+          </div>
 
-          <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-3 pt-3 border-cream-300 border-t">
+          <div className="bottom-0 sticky flex md:flex-row flex-col justify-between items-start md:items-center gap-3 bg-white px-5 sm:px-7 py-4 border-cream-300 border-t">
             <div>
               <p className="font-body text-brown-500 text-sm">Order total</p>
               <span className="font-display font-black text-brown-900 text-2xl">THB {total.toLocaleString('th-TH')}</span>
             </div>
-            <Button type="submit" variant="primary" loading={placing}>
+            <Button type="submit" variant="primary" loading={placing} className="w-full md:w-auto">
               {paymentMethod === 'promptpay' ? 'Pay With PromptPay' : 'Place Order'}
             </Button>
           </div>
