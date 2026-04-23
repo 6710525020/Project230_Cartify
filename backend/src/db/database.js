@@ -153,25 +153,46 @@ CREATE INDEX IF NOT EXISTS idx_cartitem_product ON CartItem(product_id);
 async function initDB() {
   await pool.query(SCHEMA);
 
-  const bcrypt = require('bcrypt');
+  const bcrypt = require('bcryptjs');
 
-  // Admin
-  const adminHash = await bcrypt.hash('admin1234', 10);
-  await pool.query(
-    `INSERT INTO Admin (aname, password)
-     SELECT $1, $2
-     WHERE NOT EXISTS (SELECT 1 FROM Admin WHERE aname = $1)`,
-    ['admin@gmail.com', adminHash]
-  );
+  const adminSeeds = [
+    { aname: 'admin@gmail.com', password: 'admin1234' },
+  ];
 
-  // Manager
-  const managerHash = await bcrypt.hash('manager1234', 10);
-  await pool.query(
-    `INSERT INTO Manager (mname, email, password)
-     SELECT $1, $2, $3
-     WHERE NOT EXISTS (SELECT 1 FROM Manager WHERE email = $2)`,
-    ['Manager1', 'manager@gmail.com', managerHash]
-  );
+  const managerSeeds = [
+    { mname: 'Manager1', email: 'manager@gmail.com', password: 'manager1234' },
+  ];
+
+  for (const admin of adminSeeds) {
+    const passwordHash = bcrypt.hashSync(admin.password, 10);
+    const { rowCount } = await pool.query(
+      `UPDATE Admin
+       SET password = $2
+       WHERE aname = $1`,
+      [admin.aname, passwordHash]
+    );
+
+    if (rowCount === 0) {
+      await pool.query(
+        `INSERT INTO Admin (aname, password)
+         VALUES ($1, $2)`,
+        [admin.aname, passwordHash]
+      );
+    }
+  }
+
+  for (const manager of managerSeeds) {
+    const passwordHash = bcrypt.hashSync(manager.password, 10);
+    await pool.query(
+      `INSERT INTO Manager (mname, email, password)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (email)
+       DO UPDATE
+       SET mname = EXCLUDED.mname,
+           password = EXCLUDED.password`,
+      [manager.mname, manager.email, passwordHash]
+    );
+  }
 
   console.log('Schema ready');
 }
