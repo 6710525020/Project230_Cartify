@@ -38,7 +38,7 @@ async function login(req, res, next) {
     }
 
     if (!normalizedRole || normalizedRole === 'admin') {
-      const admin = await db.get2('SELECT * FROM Admin WHERE aname = ?', [email]);
+      const admin = await db.get2('SELECT * FROM Admin WHERE aname = $1', [email]);
       if (admin && bcrypt.compareSync(password, admin.password)) {
         const token = signToken(admin.admin_id, 'admin');
         return res.json({
@@ -55,7 +55,7 @@ async function login(req, res, next) {
 
     if (!normalizedRole || normalizedRole === 'manager') {
       const manager = await db.get2(
-        'SELECT * FROM Manager WHERE email = ? OR mname = ?',
+        'SELECT * FROM Manager WHERE email = $1 OR mname = $1',
         [email, email]
       );
       if (manager && manager.password && bcrypt.compareSync(password, manager.password)) {
@@ -82,7 +82,7 @@ async function me(req, res, next) {
   try {
     if (req.user.role === 'customer') {
       const customer = await db.get2(
-        'SELECT customer_id, cname, email FROM Customer WHERE customer_id = ?',
+        'SELECT customer_id, cname, email FROM Customer WHERE customer_id = $1',
         [req.user.id]
       );
       if (!customer) return res.status(404).json({ error: 'User not found' });
@@ -95,7 +95,7 @@ async function me(req, res, next) {
     }
 
     if (req.user.role === 'admin') {
-      const admin = await db.get2('SELECT admin_id, aname FROM Admin WHERE admin_id = ?', [req.user.id]);
+      const admin = await db.get2('SELECT admin_id, aname FROM Admin WHERE admin_id = $1', [req.user.id]);
       if (!admin) return res.status(404).json({ error: 'User not found' });
       return res.json({
         id: admin.admin_id,
@@ -107,7 +107,7 @@ async function me(req, res, next) {
 
     if (req.user.role === 'manager') {
       const manager = await db.get2(
-        'SELECT manager_id, mname, email FROM Manager WHERE manager_id = ?',
+        'SELECT manager_id, mname, email FROM Manager WHERE manager_id = $1',
         [req.user.id]
       );
       if (!manager) return res.status(404).json({ error: 'User not found' });
