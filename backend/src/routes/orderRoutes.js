@@ -2,10 +2,12 @@ const router = require('express').Router();
 const ctrl = require('../controllers/orderController');
 const { authenticate, requireRole } = require('../middleware/auth');
 
+router.get('/me',                      authenticate, requireRole('customer'), ctrl.getAll);
 router.get('/',                        authenticate, ctrl.getAll);
 router.get('/:id',                     authenticate, ctrl.getOne);
 router.post('/',                       authenticate, requireRole('customer'), ctrl.create);
 router.patch('/:id/status',            authenticate, requireRole('admin'), ctrl.updateStatus);
+router.put('/:id/status',              authenticate, requireRole('admin'), ctrl.updateStatus);
 router.delete('/:id',                  authenticate, requireRole('admin'), ctrl.remove);
 
 // OrderItem sub-resource

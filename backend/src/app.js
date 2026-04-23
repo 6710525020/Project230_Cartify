@@ -14,6 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 //Routes
 app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/products',  require('./routes/productRoutes'));
+app.use('/api/cart',      require('./routes/cartRoutes'));
 app.use('/api/orders',    require('./routes/orderRoutes'));
 app.use('/api/payments',  require('./routes/paymentRoutes'));
 app.use('/api/reports',   require('./routes/reportRoutes'));

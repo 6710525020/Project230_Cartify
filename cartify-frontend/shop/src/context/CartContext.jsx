@@ -10,7 +10,10 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(false)
 
   const fetchCart = async () => {
-    if (!user || user.role !== 'customer') return
+    if (!user || user.role !== 'customer') {
+      setItems([])
+      return
+    }
     setLoading(true)
     try {
       const r = await cartAPI.get()

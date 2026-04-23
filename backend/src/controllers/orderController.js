@@ -1,4 +1,48 @@
 const db = require('../db/database');
+const { loadCart } = require('./cartController');
+
+function toOrderItemDTO(row) {
+  return {
+    product_id: row.product_id,
+    name: row.pname,
+    price: row.price,
+    quantity: row.count,
+  };
+}
+
+function parseAddress(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return { address: value };
+  }
+}
+
+async function enrichOrder(order) {
+  const items = await db.all2(
+    `SELECT oi.product_id, oi.count, p.pname, p.price
+     FROM OrderItem oi
+     JOIN Product p ON p.product_id = oi.product_id
+     WHERE oi.order_id = ?`,
+    [order.order_id]
+  );
+
+  return {
+    id: order.order_id,
+    _id: order.order_id,
+    customer_id: order.customer_id,
+    orderDate: order.order_date,
+    createdAt: order.order_date,
+    status: order.status,
+    total: order.total_price,
+    total_price: order.total_price,
+    paymentMethod: order.payment_method,
+    shippingAddress: parseAddress(order.delivery_address),
+    items: items.map(toOrderItemDTO),
+  };
+}
 
 async function recalcTotal(order_id) {
   const row = await db.get2(
@@ -28,8 +72,10 @@ async function getAll(req, res, next) {
       params = [req.user.id];
     }
     
+    query += ' ORDER BY o.order_id DESC';
     const rows = await db.all2(query, params);
-    res.json(rows);
+    const orders = await Promise.all(rows.map(enrichOrder));
+    res.json({ orders });
   } catch (err) { next(err); }
 }
 
@@ -47,34 +93,42 @@ async function getOne(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const items = await db.all2(`
-      SELECT oi.*, p.pname, p.price
-      FROM OrderItem oi
-      JOIN Product p ON p.product_id = oi.product_id
-      WHERE oi.order_id = ?
-    `, [req.params.id]);
-
-    res.json({ ...order, items });
+    res.json(await enrichOrder(order));
   } catch (err) { next(err); }
 }
 
 async function create(req, res, next) {
   try {
-    const { items, address, paymentMethod } = req.body;
-    const customer_id = req.user.id; // Get from authenticated token
-    
+    const customer_id = req.user.id;
+    const shippingAddress = req.body.shippingAddress || req.body.address || null;
+    const paymentMethod = req.body.paymentMethod || 'debit';
+    const incomingItems = Array.isArray(req.body.items) ? req.body.items : [];
+    const cart = await loadCart(customer_id);
+    const normalizedItems = incomingItems.map((item) => ({
+      product_id: Number(item.product_id ?? item.productId),
+      qty: Number(item.qty ?? item.quantity),
+    }));
+    const items = normalizedItems.length > 0
+      ? normalizedItems
+      : cart.items.map((item) => ({ product_id: Number(item.product_id), qty: Number(item.quantity) }));
+
     if (!Array.isArray(items) || items.length === 0)
       return res.status(400).json({ error: 'items[] required' });
 
-    // Validate items
     for (const item of items) {
-      if (!item.product_id || !item.qty)
+      if (!Number.isInteger(item.product_id) || !Number.isInteger(item.qty) || item.qty < 1)
         return res.status(400).json({ error: 'Each item needs product_id and qty' });
+
+      const product = await db.get2('SELECT stock FROM Product WHERE product_id = ?', [item.product_id]);
+      if (!product) return res.status(404).json({ error: `Product ${item.product_id} not found` });
+      if (product.stock < item.qty) {
+        return res.status(400).json({ error: `Not enough stock for product ${item.product_id}` });
+      }
     }
 
     const { lastID: order_id } = await db.run2(
       `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method) VALUES (?,?,?,?)`,
-      [customer_id, null, address || null, paymentMethod || 'debit']
+      [customer_id, null, shippingAddress ? JSON.stringify(shippingAddress) : null, paymentMethod]
     );
 
     for (const item of items) {
@@ -82,10 +136,25 @@ async function create(req, res, next) {
         'INSERT INTO OrderItem (order_id, product_id, count) VALUES (?,?,?)',
         [order_id, item.product_id, item.qty]
       );
+      await db.run2(
+        'UPDATE Product SET stock = stock - ? WHERE product_id = ?',
+        [item.qty, item.product_id]
+      );
     }
 
     const total_price = await recalcTotal(order_id);
-    res.status(201).json({ message: 'Order created successfully', order_id, total_price });
+    const cartId = await db.get2('SELECT cart_id FROM Cart WHERE customer_id = ?', [customer_id]);
+    if (cartId?.cart_id) {
+      await db.run2('DELETE FROM CartItem WHERE cart_id = ?', [cartId.cart_id]);
+    }
+
+    const order = await db.get2('SELECT * FROM "Order" WHERE order_id = ?', [order_id]);
+    res.status(201).json({
+      message: 'Order created successfully',
+      order_id,
+      total_price,
+      order: await enrichOrder(order),
+    });
   } catch (err) { next(err); }
 }
 

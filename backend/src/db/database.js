@@ -133,6 +133,27 @@ const SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_orderitem_order ON OrderItem(order_id);
   CREATE INDEX IF NOT EXISTS idx_payment_order   ON Payment(order_id);
   CREATE INDEX IF NOT EXISTS idx_report_order    ON Report(order_id);
+
+  CREATE TABLE IF NOT EXISTS Cart (
+    cart_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id  INTEGER NOT NULL UNIQUE,
+    created_at   TEXT    NOT NULL DEFAULT (DATETIME('now')),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS CartItem (
+    cart_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cart_id      INTEGER NOT NULL,
+    product_id   INTEGER NOT NULL,
+    quantity     INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+    UNIQUE (cart_id, product_id),
+    FOREIGN KEY (cart_id)    REFERENCES Cart(cart_id)       ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES Product(product_id) ON DELETE RESTRICT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_cart_customer    ON Cart(customer_id);
+  CREATE INDEX IF NOT EXISTS idx_cartitem_cart    ON CartItem(cart_id);
+  CREATE INDEX IF NOT EXISTS idx_cartitem_product ON CartItem(product_id);
 `;
 
 db.exec2(SCHEMA)

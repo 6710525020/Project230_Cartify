@@ -16,10 +16,67 @@ function toProductDTO(row) {
 
 async function getAll(req, res, next) {
   try {
-    const rows = await db.all2('SELECT * FROM Product ORDER BY product_id DESC');
-    res.json(rows.map(toProductDTO));
+    const q = String(req.query.q || '').trim();
+    const category = String(req.query.category || '').trim();
+    const sort = String(req.query.sort || 'createdAt');
+    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '12', 10), 1), 100);
+    const offset = (page - 1) * limit;
+
+    const where = [];
+    const params = [];
+
+    if (q) {
+      where.push('(LOWER(pname) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(category) LIKE LOWER(?))');
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
+
+    if (category) {
+      where.push('category = ?');
+      params.push(category);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const sortMap = {
+      createdAt: 'product_id DESC',
+      newest: 'product_id DESC',
+      price_asc: 'price ASC, pname ASC',
+      price_desc: 'price DESC, pname ASC',
+      name: 'pname ASC',
+      name_asc: 'pname ASC',
+    };
+    const orderBy = sortMap[sort] || sortMap.createdAt;
+
+    const totalRow = await db.get2(`SELECT COUNT(*) AS total FROM Product ${whereSql}`, params);
+    const rows = await db.all2(
+      `SELECT * FROM Product ${whereSql} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    res.json({
+      products: rows.map(toProductDTO),
+      total: totalRow?.total || 0,
+      page,
+      limit,
+    });
   }
   catch (err) { next(err); }
+}
+
+async function getCategories(req, res, next) {
+  try {
+    const rows = await db.all2(
+      `SELECT DISTINCT category
+       FROM Product
+       WHERE category IS NOT NULL AND TRIM(category) <> ''
+       ORDER BY category ASC`
+    );
+    res.json(rows.map((row) => row.category));
+  } catch (err) {
+    next(err);
+  }
 }
 
 async function getOne(req, res, next) {
@@ -80,4 +137,4 @@ async function remove(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getOne, create, update, remove };
+module.exports = { getAll, getCategories, getOne, create, update, remove };
