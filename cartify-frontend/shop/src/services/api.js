@@ -66,6 +66,11 @@ export const ordersAPI = {
   updateStatus:(id, status)   => api.put(`/orders/${id}/status`, { status }),
 }
 
+export const paymentsAPI = {
+  create: (data) => api.post('/payments', data),
+  getOne: (id) => api.get(`/payments/${id}`),
+}
+
 //Customers (Admin)
 export const customersAPI = {
   getAll:  (params) => api.get('/customers', { params }),

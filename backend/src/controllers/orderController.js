@@ -20,6 +20,15 @@ function parseAddress(value) {
   }
 }
 
+async function getPaymentForOrder(orderId) {
+  return db.get2(
+    `SELECT payment_id, amount, payment_method, slip_attachment, payment_date
+     FROM Payment
+     WHERE order_id = ?`,
+    [orderId]
+  );
+}
+
 async function enrichOrder(order) {
   const items = await db.all2(
     `SELECT oi.product_id, oi.count, p.pname, p.price
@@ -28,6 +37,7 @@ async function enrichOrder(order) {
      WHERE oi.order_id = ?`,
     [order.order_id]
   );
+  const payment = await getPaymentForOrder(order.order_id);
 
   return {
     id: order.order_id,
@@ -38,9 +48,16 @@ async function enrichOrder(order) {
     status: order.status,
     total: order.total_price,
     total_price: order.total_price,
-    paymentMethod: order.payment_method,
+    paymentMethod: payment?.payment_method || order.payment_method,
     shippingAddress: parseAddress(order.delivery_address),
     items: items.map(toOrderItemDTO),
+    payment: payment ? {
+      id: payment.payment_id,
+      amount: payment.amount,
+      method: payment.payment_method,
+      slipAttachment: payment.slip_attachment,
+      paidAt: payment.payment_date,
+    } : null,
   };
 }
 
@@ -101,9 +118,11 @@ async function create(req, res, next) {
   try {
     const customer_id = req.user.id;
     const shippingAddress = req.body.shippingAddress || req.body.address || null;
-    const paymentMethod = req.body.paymentMethod || 'debit';
+    const paymentMethod = String(req.body.paymentMethod || 'cash').toLowerCase();
+    const slipAttachment = req.body.slipAttachment || null;
     const incomingItems = Array.isArray(req.body.items) ? req.body.items : [];
     const cart = await loadCart(customer_id);
+    const validPaymentMethods = ['cash', 'credit_card', 'promptpay'];
     const normalizedItems = incomingItems.map((item) => ({
       product_id: Number(item.product_id ?? item.productId),
       qty: Number(item.qty ?? item.quantity),
@@ -114,6 +133,14 @@ async function create(req, res, next) {
 
     if (!Array.isArray(items) || items.length === 0)
       return res.status(400).json({ error: 'items[] required' });
+
+    if (!validPaymentMethods.includes(paymentMethod)) {
+      return res.status(400).json({ error: `paymentMethod must be one of: ${validPaymentMethods.join(', ')}` });
+    }
+
+    if (paymentMethod === 'promptpay' && !slipAttachment) {
+      return res.status(400).json({ error: 'PromptPay payments require a slip attachment' });
+    }
 
     for (const item of items) {
       if (!Number.isInteger(item.product_id) || !Number.isInteger(item.qty) || item.qty < 1)
@@ -126,9 +153,12 @@ async function create(req, res, next) {
       }
     }
 
+    const orderPaymentMethod = paymentMethod === 'cash' ? 'cod' : 'debit';
+    const initialStatus = paymentMethod === 'cash' ? 'pending' : 'processing';
+
     const { lastID: order_id } = await db.run2(
-      `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method) VALUES (?,?,?,?)`,
-      [customer_id, null, shippingAddress ? JSON.stringify(shippingAddress) : null, paymentMethod]
+      `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method, status) VALUES (?,?,?,?,?)`,
+      [customer_id, null, shippingAddress ? JSON.stringify(shippingAddress) : null, orderPaymentMethod, initialStatus]
     );
 
     for (const item of items) {
@@ -143,6 +173,12 @@ async function create(req, res, next) {
     }
 
     const total_price = await recalcTotal(order_id);
+    await db.run2(
+      `INSERT INTO Payment (order_id, employee_id, amount, payment_method, slip_attachment)
+       VALUES (?,?,?,?,?)`,
+      [order_id, null, total_price, paymentMethod, slipAttachment]
+    );
+
     const cartId = await db.get2('SELECT cart_id FROM Cart WHERE customer_id = ?', [customer_id]);
     if (cartId?.cart_id) {
       await db.run2('DELETE FROM CartItem WHERE cart_id = ?', [cartId.cart_id]);

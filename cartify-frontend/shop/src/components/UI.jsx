@@ -1,17 +1,16 @@
 import React from 'react'
 import { Loader2 } from 'lucide-react'
 
-// ─── Button ───────────────────────────────────────────
 export function Button({ children, variant = 'primary', size = 'md', className = '', loading, ...props }) {
   const base = 'inline-flex items-center justify-center gap-2 font-display font-bold rounded-xl transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
 
   const variants = {
-    primary:   'bg-brown-800 hover:bg-brown-700 active:bg-brown-900 text-white shadow-btn',
+    primary: 'bg-brown-800 hover:bg-brown-700 active:bg-brown-900 text-white shadow-btn',
     secondary: 'bg-white hover:bg-cream-300 text-brown-800 border-2 border-brown-200 hover:border-brown-300',
-    danger:    'bg-red-600 hover:bg-red-700 text-white',
-    ghost:     'hover:bg-brown-100 text-brown-700 hover:text-brown-900',
-    gold:      'bg-gold-400 hover:bg-gold-500 text-brown-900 font-extrabold shadow-btn',
-    outline:   'border-2 border-brown-800 text-brown-800 hover:bg-brown-800 hover:text-white',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    ghost: 'hover:bg-brown-100 text-brown-700 hover:text-brown-900',
+    gold: 'bg-gold-400 hover:bg-gold-500 text-brown-900 font-extrabold shadow-btn',
+    outline: 'border-2 border-brown-800 text-brown-800 hover:bg-brown-800 hover:text-white',
   }
 
   const sizes = {
@@ -29,7 +28,6 @@ export function Button({ children, variant = 'primary', size = 'md', className =
   )
 }
 
-// ─── Input ────────────────────────────────────────────
 export function Input({ label, error, className = '', ...props }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -46,7 +44,6 @@ export function Input({ label, error, className = '', ...props }) {
   )
 }
 
-// ─── Select ───────────────────────────────────────────
 export function Select({ label, error, children, className = '', ...props }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -65,7 +62,6 @@ export function Select({ label, error, children, className = '', ...props }) {
   )
 }
 
-// ─── Card ─────────────────────────────────────────────
 export function Card({ children, className = '', ...props }) {
   return (
     <div className={`bg-white rounded-2xl shadow-card ${className}`} {...props}>
@@ -74,17 +70,17 @@ export function Card({ children, className = '', ...props }) {
   )
 }
 
-// ─── Badge ────────────────────────────────────────────
 export function Badge({ children, color = 'gray' }) {
   const colors = {
-    gray:   'bg-cream-300 text-brown-600',
+    gray: 'bg-cream-300 text-brown-600',
     orange: 'bg-amber-100 text-amber-800',
-    red:    'bg-red-100 text-red-700',
-    green:  'bg-emerald-100 text-emerald-700',
+    red: 'bg-red-100 text-red-700',
+    green: 'bg-emerald-100 text-emerald-700',
     yellow: 'bg-yellow-100 text-yellow-800',
-    blue:   'bg-blue-100 text-blue-700',
-    brown:  'bg-brown-800 text-white',
+    blue: 'bg-blue-100 text-blue-700',
+    brown: 'bg-brown-800 text-white',
   }
+
   return (
     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold font-display ${colors[color]}`}>
       {children}
@@ -92,7 +88,6 @@ export function Badge({ children, color = 'gray' }) {
   )
 }
 
-// ─── Spinner ──────────────────────────────────────────
 export function Spinner({ size = 24 }) {
   return (
     <div className="flex justify-center items-center p-8">
@@ -101,20 +96,20 @@ export function Spinner({ size = 24 }) {
   )
 }
 
-// ─── Modal ────────────────────────────────────────────
 export function Modal({ open, onClose, title, children, size = 'md' }) {
   if (!open) return null
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
+
   return (
     <div className="z-50 fixed inset-0 flex justify-center items-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-brown-950/40 backdrop-blur-sm" />
       <div
         className={`relative w-full ${sizes[size]} bg-white rounded-3xl shadow-2xl`}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center px-7 py-5 border-cream-300 border-b">
           <h2 className="font-display font-extrabold text-brown-900 text-xl">{title}</h2>
-          <button onClick={onClose} className="flex justify-center items-center hover:bg-cream-300 rounded-full w-8 h-8 font-bold text-brown-500 hover:text-brown-800 text-xl transition-colors">×</button>
+          <button onClick={onClose} className="flex justify-center items-center hover:bg-cream-300 rounded-full w-8 h-8 font-bold text-brown-500 hover:text-brown-800 text-xl transition-colors">X</button>
         </div>
         <div className="px-7 py-6">{children}</div>
       </div>
@@ -122,7 +117,6 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
   )
 }
 
-// ─── Table ────────────────────────────────────────────
 export function Table({ headers, children, className = '' }) {
   return (
     <div className={`overflow-x-auto rounded-2xl bg-white shadow-card ${className}`}>
@@ -152,29 +146,31 @@ export function Td({ children, className = '' }) {
   return <td className={`px-5 py-3.5 text-brown-700 ${className}`}>{children}</td>
 }
 
-// ─── Toast ────────────────────────────────────────────
 let toastFn = null
 export const toast = {
   success: (msg) => toastFn?.('success', msg),
-  error:   (msg) => toastFn?.('error', msg),
-  info:    (msg) => toastFn?.('info', msg),
+  error: (msg) => toastFn?.('error', msg),
+  info: (msg) => toastFn?.('info', msg),
 }
 
 export function ToastContainer() {
   const [toasts, setToasts] = React.useState([])
+
   toastFn = (type, msg) => {
     const id = Date.now()
-    setToasts(p => [...p, { id, type, msg }])
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500)
+    setToasts((p) => [...p, { id, type, msg }])
+    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3500)
   }
+
   const colors = {
     success: 'bg-emerald-700 text-white',
-    error:   'bg-red-700 text-white',
-    info:    'bg-brown-800 text-white',
+    error: 'bg-red-700 text-white',
+    info: 'bg-brown-800 text-white',
   }
+
   return (
     <div className="top-4 right-4 z-[9999] fixed flex flex-col gap-2">
-      {toasts.map(t => (
+      {toasts.map((t) => (
         <div key={t.id} className={`px-5 py-3 rounded-xl text-sm font-display font-bold shadow-lg animate-in slide-in-from-right ${colors[t.type]}`}>
           {t.msg}
         </div>
@@ -183,15 +179,15 @@ export function ToastContainer() {
   )
 }
 
-// ─── Order Status Badge ───────────────────────────────
 export function OrderStatusBadge({ status }) {
   const map = {
-    pending:    { label: 'รอยืนยัน',    color: 'yellow' },
-    confirmed:  { label: 'ยืนยันแล้ว', color: 'blue' },
-    processing: { label: 'กำลังเตรียม', color: 'orange' },
-    shipped:    { label: 'จัดส่งแล้ว',  color: 'orange' },
-    delivered:  { label: 'ได้รับแล้ว',  color: 'green' },
-    cancelled:  { label: 'ยกเลิก',       color: 'red' },
+    pending: { label: 'Pending', color: 'yellow' },
+    confirmed: { label: 'Confirmed', color: 'blue' },
+    processing: { label: 'Processing', color: 'orange' },
+    shipped: { label: 'Shipped', color: 'orange' },
+    delivered: { label: 'Delivered', color: 'green' },
+    cancelled: { label: 'Cancelled', color: 'red' },
+    completed: { label: 'Completed', color: 'green' },
   }
   const s = map[status] || { label: status, color: 'gray' }
   return <Badge color={s.color}>{s.label}</Badge>

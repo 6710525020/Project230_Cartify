@@ -107,6 +107,7 @@ const SCHEMA = `
     amount          REAL    NOT NULL CHECK (amount >= 0),
     payment_method  TEXT    NOT NULL
                             CHECK (payment_method IN ('cash','credit_card','bank_transfer','promptpay')),
+    slip_attachment TEXT,
     payment_date    TEXT    NOT NULL DEFAULT (DATE('now')),
     FOREIGN KEY (order_id)    REFERENCES "Order"(order_id)     ON DELETE CASCADE,
     FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE SET NULL
@@ -174,6 +175,7 @@ db.exec2(SCHEMA)
     await ensureColumn('Product', 'category', 'category TEXT');
     await ensureColumn('Product', 'image', 'image TEXT');
     await ensureColumn('Product', 'stock', 'stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0)');
+    await ensureColumn('Payment', 'slip_attachment', 'slip_attachment TEXT');
 
     const bcrypt = require('bcrypt');
     //admin

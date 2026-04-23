@@ -27,7 +27,7 @@ async function getOne(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    const { order_id, amount, payment_method, employee_id } = req.body;
+    const { order_id, amount, payment_method, employee_id, slip_attachment } = req.body;
     if (!order_id || amount === undefined || !payment_method)
       return res.status(400).json({ error: 'order_id, amount and payment_method are required' });
 
@@ -35,12 +35,12 @@ async function create(req, res, next) {
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     const { lastID } = await db.run2(
-      `INSERT INTO Payment (order_id, employee_id, amount, payment_method) VALUES (?,?,?,?)`,
-      [order_id, employee_id ?? null, amount, payment_method]
+      `INSERT INTO Payment (order_id, employee_id, amount, payment_method, slip_attachment) VALUES (?,?,?,?,?)`,
+      [order_id, employee_id ?? null, amount, payment_method, slip_attachment ?? null]
     );
-    await db.run2(`UPDATE "Order" SET status = 'completed' WHERE order_id = ?`, [order_id]);
+    await db.run2(`UPDATE "Order" SET status = 'processing' WHERE order_id = ?`, [order_id]);
 
-    res.status(201).json({ payment_id: lastID, order_id, amount, payment_method });
+    res.status(201).json({ payment_id: lastID, order_id, amount, payment_method, slip_attachment: slip_attachment ?? null });
   } catch (err) { next(err); }
 }
 
