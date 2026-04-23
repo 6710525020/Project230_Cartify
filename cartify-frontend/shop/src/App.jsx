@@ -21,9 +21,9 @@ function NotFound() {
   return (
     <div className="flex flex-col justify-center items-center px-4 min-h-[60vh] text-center">
       <p className="mb-4 font-display font-black text-cream-400 text-8xl">404</p>
-      <h1 className="mb-2 font-display font-black text-brown-800 text-2xl">เนเธกเนเธเธเธซเธเนเธฒเธเธตเน</h1>
-      <p className="mb-6 font-body text-brown-400 text-sm">เธซเธเนเธฒเธ—เธตเนเธเธธเธ“เธเนเธเธซเธฒเธญเธฒเธเธ–เธนเธเธขเนเธฒเธขเธซเธฃเธทเธญเนเธกเนเธกเธตเธญเธขเธนเน</p>
-      <a href="/" className="bg-brown-800 hover:bg-brown-700 shadow-btn px-6 py-3 rounded-xl font-display font-bold text-white text-sm transition-colors">เธเธฅเธฑเธเธซเธเนเธฒเนเธฃเธ</a>
+      <h1 className="mb-2 font-display font-black text-brown-800 text-2xl">Page Not Found</h1>
+      <p className="mb-6 font-body text-brown-400 text-sm">The page you are looking for might have been moved, deleted, or does not exist.</p>
+      <a href="/" className="bg-brown-800 hover:bg-brown-700 shadow-btn px-6 py-3 rounded-xl font-display font-bold text-white text-sm transition-colors">Back to Home</a>
     </div>
   )
 }
