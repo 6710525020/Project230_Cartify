@@ -130,6 +130,18 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
+    const inOrders = await db.get2(
+      'SELECT COUNT(*)::int AS total FROM OrderItem WHERE product_id = $1',
+      [req.params.id]
+    );
+    if ((inOrders?.total || 0) > 0) {
+      return res.status(400).json({
+        error: 'This product cannot be deleted because it is already part of an order.',
+      });
+    }
+
+    await db.run2('DELETE FROM CartItem WHERE product_id = $1', [req.params.id]);
+
     const { changes } = await db.run2('DELETE FROM Product WHERE product_id = $1', [req.params.id]);
     if (changes === 0) return res.status(404).json({ error: 'Product not found' });
     res.json({ message: 'Deleted successfully' });

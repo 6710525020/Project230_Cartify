@@ -75,7 +75,7 @@ function ProductForm({ initial, onSave, onClose }) {
         toast.success('เพิ่มสินค้าแล้ว')
       }
       onSave()
-    } catch { toast.error('เกิดข้อผิดพลาด') }
+    } catch (err) { toast.error(err.response?.data?.error || 'เกิดข้อผิดพลาด') }
     finally { setSaving(false) }
   }
 
@@ -146,7 +146,7 @@ export default function AdminPage() {
       else { await customersAPI.delete(id); toast.success('ลบลูกค้าแล้ว') }
       setDelConfirm(null)
       fetchData()
-    } catch { toast.error('เกิดข้อผิดพลาด') }
+    } catch (err) { toast.error(err.response?.data?.error || 'เกิดข้อผิดพลาด') }
   }
 
   const openOrderModal = (order) => {
