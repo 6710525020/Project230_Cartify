@@ -22,7 +22,7 @@ async function login(req, res, next) {
     const normalizedRole = role ? String(role).toLowerCase() : null;
 
     if (!normalizedRole || normalizedRole === 'customer') {
-      const customer = await db.get2('SELECT * FROM Customer WHERE email = ?', [email]);
+      const customer = await db.get2('SELECT * FROM Customer WHERE email = $1', [email]);
       if (customer && bcrypt.compareSync(password, customer.password)) {
         const token = signToken(customer.customer_id, 'customer');
         return res.json({
@@ -56,7 +56,7 @@ async function login(req, res, next) {
     if (!normalizedRole || normalizedRole === 'manager') {
       const manager = await db.get2(
         'SELECT * FROM Manager WHERE email = $1 OR mname = $1',
-        [email, email]
+        [email]
       );
       if (manager && manager.password && bcrypt.compareSync(password, manager.password)) {
         const token = signToken(manager.manager_id, 'manager');
