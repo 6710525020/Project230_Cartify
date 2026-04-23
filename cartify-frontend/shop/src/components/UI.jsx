@@ -182,10 +182,12 @@ export function ToastContainer() {
 export function OrderStatusBadge({ status }) {
   const map = {
     pending: { label: 'Pending', color: 'yellow' },
+    payment_completed: { label: 'Payment Completed', color: 'blue' },
+    shipping_in_progress: { label: 'Shipping In Progress', color: 'orange' },
+    delivered: { label: 'Delivered', color: 'green' },
     confirmed: { label: 'Confirmed', color: 'blue' },
     processing: { label: 'Processing', color: 'orange' },
     shipped: { label: 'Shipped', color: 'orange' },
-    delivered: { label: 'Delivered', color: 'green' },
     cancelled: { label: 'Cancelled', color: 'red' },
     completed: { label: 'Completed', color: 'green' },
   }

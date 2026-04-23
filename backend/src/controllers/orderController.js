@@ -1,6 +1,14 @@
 const db = require('../db/database');
 const { loadCart } = require('./cartController');
 
+const ORDER_STATUSES = [
+  'pending',
+  'payment_completed',
+  'shipping_in_progress',
+  'delivered',
+  'cancelled',
+];
+
 function toOrderItemDTO(row) {
   return {
     product_id: row.product_id,
@@ -84,6 +92,12 @@ async function getAll(req, res, next) {
       params = [req.user.id];
     }
 
+    if (req.query.status && ORDER_STATUSES.includes(req.query.status)) {
+      const statusParam = `$${params.length + 1}`;
+      query += params.length === 0 ? ` WHERE o.status = ${statusParam}` : ` AND o.status = ${statusParam}`;
+      params.push(req.query.status);
+    }
+
     query += ' ORDER BY o.order_id DESC';
     const rows   = await db.all2(query, params);
     const orders = await Promise.all(rows.map(enrichOrder));
@@ -146,7 +160,7 @@ async function create(req, res, next) {
     }
 
     const orderPaymentMethod = paymentMethod === 'cash' ? 'cod' : 'debit';
-    const initialStatus      = paymentMethod === 'cash' ? 'pending' : 'processing';
+    const initialStatus      = paymentMethod === 'cash' ? 'pending' : 'payment_completed';
 
     const orderRow = await db.get2(
       `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method, status)
@@ -191,9 +205,8 @@ async function create(req, res, next) {
 async function updateStatus(req, res, next) {
   try {
     const { status } = req.body;
-    const valid = ['pending', 'processing', 'completed', 'cancelled'];
-    if (!valid.includes(status))
-      return res.status(400).json({ error: `status must be one of: ${valid.join(', ')}` });
+    if (!ORDER_STATUSES.includes(status))
+      return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
     const { changes } = await db.run2(
       `UPDATE "Order" SET status = $1 WHERE order_id = $2`,
       [status, req.params.id]

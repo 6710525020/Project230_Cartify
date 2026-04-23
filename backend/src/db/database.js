@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
 
+const ORDER_STATUS_VALUES = ['pending', 'payment_completed', 'shipping_in_progress', 'delivered', 'cancelled'];
+
 // Connect
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -74,7 +76,7 @@ CREATE TABLE IF NOT EXISTS "Order" (
   admin_id         INTEGER,
   order_date       DATE    NOT NULL DEFAULT CURRENT_DATE,
   status           TEXT    NOT NULL DEFAULT 'pending'
-                   CHECK (status IN ('pending','processing','completed','cancelled')),
+                   CHECK (status IN ('pending','payment_completed','shipping_in_progress','delivered','cancelled')),
   total_price      NUMERIC NOT NULL DEFAULT 0,
   delivery_address TEXT,
   payment_method   TEXT    DEFAULT 'debit'
@@ -152,6 +154,21 @@ CREATE INDEX IF NOT EXISTS idx_cartitem_product ON CartItem(product_id);
 // Init
 async function initDB() {
   await pool.query(SCHEMA);
+  await pool.query(`
+    ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_status_check";
+    ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS order_status_check;
+    UPDATE "Order"
+    SET status = CASE
+      WHEN status = 'confirmed' THEN 'payment_completed'
+      WHEN status = 'processing' THEN 'shipping_in_progress'
+      WHEN status = 'shipped' THEN 'shipping_in_progress'
+      WHEN status = 'completed' THEN 'delivered'
+      ELSE status
+    END;
+    ALTER TABLE "Order"
+    ADD CONSTRAINT order_status_check
+    CHECK (status IN (${ORDER_STATUS_VALUES.map((status) => `'${status}'`).join(', ')}));
+  `);
 
   const bcrypt = require('bcryptjs');
 

@@ -63,7 +63,7 @@ export const ordersAPI = {
   getOne:      (id)           => api.get(`/orders/${id}`),
   getAll:      (params)       => api.get('/orders', { params }),
   confirm:     (id)           => api.put(`/orders/${id}/confirm`),
-  updateStatus:(id, status)   => api.put(`/orders/${id}/status`, { status }),
+  updateStatus:(id, status)   => api.put(`/orders/${id}/status`, typeof status === 'string' ? { status } : status),
 }
 
 export const paymentsAPI = {

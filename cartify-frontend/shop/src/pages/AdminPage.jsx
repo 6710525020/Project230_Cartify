@@ -27,6 +27,14 @@ function orderCreatedAt(order) {
   return order.createdAt || order.orderDate || order.order_date || null
 }
 
+const ORDER_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'payment_completed', label: 'Payment completed' },
+  { value: 'shipping_in_progress', label: 'Shipping in progress' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
+
 function ProductForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState(initial || { name: '', description: '', price: '', stock: '', category: '', image: '' })
   const [saving, setSaving] = useState(false)
@@ -110,6 +118,8 @@ export default function AdminPage() {
   const [search, setSearch]       = useState('')
   const [modal, setModal]         = useState({ open: false, type: null, data: null })
   const [delConfirm, setDelConfirm] = useState(null)
+  const [orderModal, setOrderModal] = useState({ open: false, order: null, status: 'pending' })
+  const [savingOrderStatus, setSavingOrderStatus] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -137,6 +147,31 @@ export default function AdminPage() {
       setDelConfirm(null)
       fetchData()
     } catch { toast.error('เกิดข้อผิดพลาด') }
+  }
+
+  const openOrderModal = (order) => {
+    setOrderModal({
+      open: true,
+      order,
+      status: order.status || 'pending',
+    })
+  }
+
+  const handleOrderStatusSave = async (e) => {
+    e.preventDefault()
+    if (!orderModal.order) return
+
+    setSavingOrderStatus(true)
+    try {
+      await ordersAPI.updateStatus(orderKey(orderModal.order), orderModal.status)
+      toast.success('Order status updated')
+      setOrderModal({ open: false, order: null, status: 'pending' })
+      fetchData()
+    } catch {
+      toast.error('Failed to update order status')
+    } finally {
+      setSavingOrderStatus(false)
+    }
   }
 
   const tabs = [
@@ -236,7 +271,7 @@ export default function AdminPage() {
           )}
 
           {tab === 'orders' && (
-            <Table headers={['รหัส','ลูกค้า','รายการ','ยอดรวม','สถานะ','วันที่']}>
+            <Table headers={['รหัส','ลูกค้า','รายการ','ยอดรวม','สถานะ','วันที่','Manage']}>
               {filteredOrders.map(o => {
                 const id = orderKey(o)
                 const createdAt = orderCreatedAt(o)
@@ -248,6 +283,11 @@ export default function AdminPage() {
                     <Td><span className="font-display font-extrabold text-brown-900">฿{Number(o.total ?? o.total_price ?? 0).toLocaleString('th-TH')}</span></Td>
                     <Td><OrderStatusBadge status={o.status} /></Td>
                     <Td><span className="text-brown-400 text-xs">{createdAt ? new Date(createdAt).toLocaleDateString('th-TH') : '-'}</span></Td>
+                    <Td>
+                      <Button variant="secondary" size="sm" onClick={() => openOrderModal(o)}>
+                        Update Status
+                      </Button>
+                    </Td>
                   </Tr>
                 )
               })}
@@ -267,6 +307,43 @@ export default function AdminPage() {
           <Button variant="secondary" onClick={() => setDelConfirm(null)} className="flex-1">ยกเลิก</Button>
           <Button variant="danger" onClick={() => handleDelete(delConfirm)} className="flex-1">ลบ</Button>
         </div>
+      </Modal>
+      <Modal
+        open={orderModal.open}
+        onClose={() => setOrderModal({ open: false, order: null, status: 'pending' })}
+        title={`Update Order #${String(orderKey(orderModal.order || {}) || '').slice(-8).toUpperCase()}`}
+        size="sm"
+      >
+        {orderModal.order && (
+          <form onSubmit={handleOrderStatusSave} className="flex flex-col gap-4">
+            <div className="bg-cream-200 p-4 rounded-2xl">
+              <p className="font-display font-bold text-brown-800 text-sm">{orderCustomer(orderModal.order)}</p>
+              <p className="mt-1 font-body text-brown-500 text-xs">{orderModal.order.shippingAddress?.address || '-'}</p>
+            </div>
+            <Select
+              label="Order status"
+              value={orderModal.status}
+              onChange={(e) => setOrderModal((prev) => ({ ...prev, status: e.target.value }))}
+            >
+              {ORDER_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Select>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setOrderModal({ open: false, order: null, status: 'pending' })}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" loading={savingOrderStatus} className="flex-1">
+                Save
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   )
