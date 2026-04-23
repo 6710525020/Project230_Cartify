@@ -53,7 +53,7 @@ function AppLayout() {
       </main>
 
       <footer className="bg-brown-800 mt-auto px-4 py-5">
-        <p className="font-body text-white/60 text-sm text-center">ยฉ 2026 Cartify</p>
+        <p className="font-body text-white/60 text-sm text-center">© 2026 Cartify</p>
       </footer>
     </div>
   )
