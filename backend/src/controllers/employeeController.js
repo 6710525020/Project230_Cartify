@@ -7,7 +7,7 @@ async function getAll(req, res, next) {
 
 async function getOne(req, res, next) {
   try {
-    const row = await db.get2('SELECT * FROM Employee WHERE employee_id = ?', [req.params.id]);
+    const row = await db.get2('SELECT * FROM Employee WHERE employee_id = $1', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'Employee not found' });
     res.json(row);
   } catch (err) { next(err); }
@@ -17,15 +17,18 @@ async function create(req, res, next) {
   try {
     const { ename } = req.body;
     if (!ename) return res.status(400).json({ error: 'ename is required' });
-    const { lastID } = await db.run2('INSERT INTO Employee (ename) VALUES (?)', [ename]);
-    res.status(201).json({ employee_id: lastID, ename });
+    const row = await db.get2(
+      'INSERT INTO Employee (ename) VALUES ($1) RETURNING employee_id',
+      [ename]
+    );
+    res.status(201).json({ employee_id: row.employee_id, ename });
   } catch (err) { next(err); }
 }
 
 async function update(req, res, next) {
   try {
     const { changes } = await db.run2(
-      'UPDATE Employee SET ename = COALESCE(?,ename) WHERE employee_id = ?',
+      'UPDATE Employee SET ename = COALESCE($1, ename) WHERE employee_id = $2',
       [req.body.ename ?? null, req.params.id]
     );
     if (changes === 0) return res.status(404).json({ error: 'Employee not found' });
@@ -35,7 +38,7 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    const { changes } = await db.run2('DELETE FROM Employee WHERE employee_id = ?', [req.params.id]);
+    const { changes } = await db.run2('DELETE FROM Employee WHERE employee_id = $1', [req.params.id]);
     if (changes === 0) return res.status(404).json({ error: 'Employee not found' });
     res.json({ message: 'Deleted' });
   } catch (err) { next(err); }

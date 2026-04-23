@@ -6,7 +6,7 @@ async function getAll(req, res, next) {
       SELECT p.*, e.ename, o.total_price AS order_total
       FROM Payment p
       LEFT JOIN Employee e ON e.employee_id = p.employee_id
-      LEFT JOIN "Order" o  ON o.order_id    = p.order_id
+      LEFT JOIN "Order"  o ON o.order_id    = p.order_id
     `);
     res.json(rows);
   } catch (err) { next(err); }
@@ -18,7 +18,7 @@ async function getOne(req, res, next) {
       SELECT p.*, e.ename
       FROM Payment p
       LEFT JOIN Employee e ON e.employee_id = p.employee_id
-      WHERE p.payment_id = ?
+      WHERE p.payment_id = $1
     `, [req.params.id]);
     if (!row) return res.status(404).json({ error: 'Payment not found' });
     res.json(row);
@@ -31,22 +31,29 @@ async function create(req, res, next) {
     if (!order_id || amount === undefined || !payment_method)
       return res.status(400).json({ error: 'order_id, amount and payment_method are required' });
 
-    const order = await db.get2(`SELECT order_id FROM "Order" WHERE order_id = ?`, [order_id]);
+    const order = await db.get2(`SELECT order_id FROM "Order" WHERE order_id = $1`, [order_id]);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    const { lastID } = await db.run2(
-      `INSERT INTO Payment (order_id, employee_id, amount, payment_method, slip_attachment) VALUES (?,?,?,?,?)`,
+    const row = await db.get2(
+      `INSERT INTO Payment (order_id, employee_id, amount, payment_method, slip_attachment)
+       VALUES ($1, $2, $3, $4, $5) RETURNING payment_id`,
       [order_id, employee_id ?? null, amount, payment_method, slip_attachment ?? null]
     );
-    await db.run2(`UPDATE "Order" SET status = 'processing' WHERE order_id = ?`, [order_id]);
+    await db.run2(`UPDATE "Order" SET status = 'processing' WHERE order_id = $1`, [order_id]);
 
-    res.status(201).json({ payment_id: lastID, order_id, amount, payment_method, slip_attachment: slip_attachment ?? null });
+    res.status(201).json({
+      payment_id: row.payment_id,
+      order_id,
+      amount,
+      payment_method,
+      slip_attachment: slip_attachment ?? null,
+    });
   } catch (err) { next(err); }
 }
 
 async function remove(req, res, next) {
   try {
-    const { changes } = await db.run2('DELETE FROM Payment WHERE payment_id = ?', [req.params.id]);
+    const { changes } = await db.run2('DELETE FROM Payment WHERE payment_id = $1', [req.params.id]);
     if (changes === 0) return res.status(404).json({ error: 'Payment not found' });
     res.json({ message: 'Deleted successfully' });
   } catch (err) { next(err); }

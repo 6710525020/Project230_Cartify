@@ -13,18 +13,14 @@ function toOrderItemDTO(row) {
 function parseAddress(value) {
   if (!value) return null;
   if (typeof value === 'object') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return { address: value };
-  }
+  try { return JSON.parse(value); }
+  catch { return { address: value }; }
 }
 
 async function getPaymentForOrder(orderId) {
   return db.get2(
     `SELECT payment_id, amount, payment_method, slip_attachment, payment_date
-     FROM Payment
-     WHERE order_id = ?`,
+     FROM Payment WHERE order_id = $1`,
     [orderId]
   );
 }
@@ -34,7 +30,7 @@ async function enrichOrder(order) {
     `SELECT oi.product_id, oi.count, p.pname, p.price
      FROM OrderItem oi
      JOIN Product p ON p.product_id = oi.product_id
-     WHERE oi.order_id = ?`,
+     WHERE oi.order_id = $1`,
     [order.order_id]
   );
   const payment = await getPaymentForOrder(order.order_id);
@@ -66,10 +62,10 @@ async function recalcTotal(order_id) {
     `SELECT COALESCE(SUM(oi.count * p.price), 0) AS total
      FROM OrderItem oi
      JOIN Product p ON p.product_id = oi.product_id
-     WHERE oi.order_id = ?`,
+     WHERE oi.order_id = $1`,
     [order_id]
   );
-  await db.run2('UPDATE "Order" SET total_price = ? WHERE order_id = ?', [row.total, order_id]);
+  await db.run2('UPDATE "Order" SET total_price = $1 WHERE order_id = $2', [row.total, order_id]);
   return row.total;
 }
 
@@ -79,18 +75,17 @@ async function getAll(req, res, next) {
       SELECT o.*, c.cname, a.aname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
-      LEFT JOIN Admin a    ON a.admin_id    = o.admin_id
+      LEFT JOIN Admin    a ON a.admin_id    = o.admin_id
     `;
     let params = [];
-    
-    // If user is a customer, only show their orders
+
     if (req.user.role === 'customer') {
-      query += ` WHERE o.customer_id = ?`;
+      query += ` WHERE o.customer_id = $1`;
       params = [req.user.id];
     }
-    
+
     query += ' ORDER BY o.order_id DESC';
-    const rows = await db.all2(query, params);
+    const rows   = await db.all2(query, params);
     const orders = await Promise.all(rows.map(enrichOrder));
     res.json({ orders });
   } catch (err) { next(err); }
@@ -102,31 +97,31 @@ async function getOne(req, res, next) {
       SELECT o.*, c.cname, a.aname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
-      LEFT JOIN Admin a    ON a.admin_id    = o.admin_id
-      WHERE o.order_id = ?
+      LEFT JOIN Admin    a ON a.admin_id    = o.admin_id
+      WHERE o.order_id = $1
     `, [req.params.id]);
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (req.user.role === 'customer' && String(order.customer_id) !== String(req.user.id)) {
+    if (req.user.role === 'customer' && String(order.customer_id) !== String(req.user.id))
       return res.status(403).json({ error: 'Forbidden' });
-    }
-
     res.json(await enrichOrder(order));
   } catch (err) { next(err); }
 }
 
 async function create(req, res, next) {
   try {
-    const customer_id = req.user.id;
-    const shippingAddress = req.body.shippingAddress || req.body.address || null;
-    const paymentMethod = String(req.body.paymentMethod || 'cash').toLowerCase();
-    const slipAttachment = req.body.slipAttachment || null;
-    const incomingItems = Array.isArray(req.body.items) ? req.body.items : [];
-    const cart = await loadCart(customer_id);
+    const customer_id      = req.user.id;
+    const shippingAddress  = req.body.shippingAddress || req.body.address || null;
+    const paymentMethod    = String(req.body.paymentMethod || 'cash').toLowerCase();
+    const slipAttachment   = req.body.slipAttachment || null;
+    const incomingItems    = Array.isArray(req.body.items) ? req.body.items : [];
+    const cart             = await loadCart(customer_id);
     const validPaymentMethods = ['cash', 'credit_card', 'promptpay'];
+
     const normalizedItems = incomingItems.map((item) => ({
       product_id: Number(item.product_id ?? item.productId),
       qty: Number(item.qty ?? item.quantity),
     }));
+
     const items = normalizedItems.length > 0
       ? normalizedItems
       : cart.items.map((item) => ({ product_id: Number(item.product_id), qty: Number(item.quantity) }));
@@ -134,40 +129,39 @@ async function create(req, res, next) {
     if (!Array.isArray(items) || items.length === 0)
       return res.status(400).json({ error: 'items[] required' });
 
-    if (!validPaymentMethods.includes(paymentMethod)) {
+    if (!validPaymentMethods.includes(paymentMethod))
       return res.status(400).json({ error: `paymentMethod must be one of: ${validPaymentMethods.join(', ')}` });
-    }
 
-    if (paymentMethod === 'promptpay' && !slipAttachment) {
+    if (paymentMethod === 'promptpay' && !slipAttachment)
       return res.status(400).json({ error: 'PromptPay payments require a slip attachment' });
-    }
 
     for (const item of items) {
       if (!Number.isInteger(item.product_id) || !Number.isInteger(item.qty) || item.qty < 1)
         return res.status(400).json({ error: 'Each item needs product_id and qty' });
 
-      const product = await db.get2('SELECT stock FROM Product WHERE product_id = ?', [item.product_id]);
+      const product = await db.get2('SELECT stock FROM Product WHERE product_id = $1', [item.product_id]);
       if (!product) return res.status(404).json({ error: `Product ${item.product_id} not found` });
-      if (product.stock < item.qty) {
+      if (product.stock < item.qty)
         return res.status(400).json({ error: `Not enough stock for product ${item.product_id}` });
-      }
     }
 
     const orderPaymentMethod = paymentMethod === 'cash' ? 'cod' : 'debit';
-    const initialStatus = paymentMethod === 'cash' ? 'pending' : 'processing';
+    const initialStatus      = paymentMethod === 'cash' ? 'pending' : 'processing';
 
-    const { lastID: order_id } = await db.run2(
-      `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method, status) VALUES (?,?,?,?,?)`,
+    const orderRow = await db.get2(
+      `INSERT INTO "Order" (customer_id, admin_id, delivery_address, payment_method, status)
+       VALUES ($1, $2, $3, $4, $5) RETURNING order_id`,
       [customer_id, null, shippingAddress ? JSON.stringify(shippingAddress) : null, orderPaymentMethod, initialStatus]
     );
+    const order_id = orderRow.order_id;
 
     for (const item of items) {
       await db.run2(
-        'INSERT INTO OrderItem (order_id, product_id, count) VALUES (?,?,?)',
+        'INSERT INTO OrderItem (order_id, product_id, count) VALUES ($1, $2, $3)',
         [order_id, item.product_id, item.qty]
       );
       await db.run2(
-        'UPDATE Product SET stock = stock - ? WHERE product_id = ?',
+        'UPDATE Product SET stock = stock - $1 WHERE product_id = $2',
         [item.qty, item.product_id]
       );
     }
@@ -175,16 +169,16 @@ async function create(req, res, next) {
     const total_price = await recalcTotal(order_id);
     await db.run2(
       `INSERT INTO Payment (order_id, employee_id, amount, payment_method, slip_attachment)
-       VALUES (?,?,?,?,?)`,
+       VALUES ($1, $2, $3, $4, $5)`,
       [order_id, null, total_price, paymentMethod, slipAttachment]
     );
 
-    const cartId = await db.get2('SELECT cart_id FROM Cart WHERE customer_id = ?', [customer_id]);
-    if (cartId?.cart_id) {
-      await db.run2('DELETE FROM CartItem WHERE cart_id = ?', [cartId.cart_id]);
+    const cartRow = await db.get2('SELECT cart_id FROM Cart WHERE customer_id = $1', [customer_id]);
+    if (cartRow?.cart_id) {
+      await db.run2('DELETE FROM CartItem WHERE cart_id = $1', [cartRow.cart_id]);
     }
 
-    const order = await db.get2('SELECT * FROM "Order" WHERE order_id = ?', [order_id]);
+    const order = await db.get2('SELECT * FROM "Order" WHERE order_id = $1', [order_id]);
     res.status(201).json({
       message: 'Order created successfully',
       order_id,
@@ -201,7 +195,7 @@ async function updateStatus(req, res, next) {
     if (!valid.includes(status))
       return res.status(400).json({ error: `status must be one of: ${valid.join(', ')}` });
     const { changes } = await db.run2(
-      `UPDATE "Order" SET status = ? WHERE order_id = ?`,
+      `UPDATE "Order" SET status = $1 WHERE order_id = $2`,
       [status, req.params.id]
     );
     if (changes === 0) return res.status(404).json({ error: 'Order not found' });
@@ -211,7 +205,7 @@ async function updateStatus(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    const { changes } = await db.run2(`DELETE FROM "Order" WHERE order_id = ?`, [req.params.id]);
+    const { changes } = await db.run2(`DELETE FROM "Order" WHERE order_id = $1`, [req.params.id]);
     if (changes === 0) return res.status(404).json({ error: 'Order not found' });
     res.json({ message: 'Deleted successfully' });
   } catch (err) { next(err); }
@@ -223,24 +217,24 @@ async function addItem(req, res, next) {
     const { product_id, count } = req.body;
     if (!product_id || !count)
       return res.status(400).json({ error: 'product_id and count required' });
-    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = ?', [order_id]);
+
+    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = $1', [order_id]);
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (String(order.customer_id) !== String(req.user.id)) {
+    if (String(order.customer_id) !== String(req.user.id))
       return res.status(403).json({ error: 'Forbidden' });
-    }
 
     const existing = await db.get2(
-      'SELECT count FROM OrderItem WHERE order_id = ? AND product_id = ?',
+      'SELECT count FROM OrderItem WHERE order_id = $1 AND product_id = $2',
       [order_id, product_id]
     );
     if (existing) {
       await db.run2(
-        'UPDATE OrderItem SET count = ? WHERE order_id = ? AND product_id = ?',
+        'UPDATE OrderItem SET count = $1 WHERE order_id = $2 AND product_id = $3',
         [existing.count + count, order_id, product_id]
       );
     } else {
       await db.run2(
-        'INSERT INTO OrderItem (order_id, product_id, count) VALUES (?,?,?)',
+        'INSERT INTO OrderItem (order_id, product_id, count) VALUES ($1, $2, $3)',
         [order_id, product_id, count]
       );
     }
@@ -252,13 +246,13 @@ async function addItem(req, res, next) {
 async function removeItem(req, res, next) {
   try {
     const { id: order_id, productId: product_id } = req.params;
-    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = ?', [order_id]);
+    const order = await db.get2('SELECT customer_id FROM "Order" WHERE order_id = $1', [order_id]);
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (String(order.customer_id) !== String(req.user.id)) {
+    if (String(order.customer_id) !== String(req.user.id))
       return res.status(403).json({ error: 'Forbidden' });
-    }
+
     const { changes } = await db.run2(
-      'DELETE FROM OrderItem WHERE order_id = ? AND product_id = ?',
+      'DELETE FROM OrderItem WHERE order_id = $1 AND product_id = $2',
       [order_id, product_id]
     );
     if (changes === 0) return res.status(404).json({ error: 'Item not found' });

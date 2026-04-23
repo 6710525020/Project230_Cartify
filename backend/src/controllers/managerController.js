@@ -9,7 +9,7 @@ async function getAll(req, res, next) {
 async function getOne(req, res, next) {
   try {
     const row = await db.get2(
-      'SELECT manager_id, mname, email FROM Manager WHERE manager_id = ?',
+      'SELECT manager_id, mname, email FROM Manager WHERE manager_id = $1',
       [req.params.id]
     );
     if (!row) return res.status(404).json({ error: 'Manager not found' });
@@ -22,11 +22,11 @@ async function create(req, res, next) {
     const { mname, email, password } = req.body;
     if (!mname) return res.status(400).json({ error: 'mname is required' });
     const hash = password ? bcrypt.hashSync(password, 10) : null;
-    const { lastID } = await db.run2(
-      'INSERT INTO Manager (mname, email, password) VALUES (?,?,?)',
+    const row = await db.get2(
+      'INSERT INTO Manager (mname, email, password) VALUES ($1, $2, $3) RETURNING manager_id',
       [mname, email ?? null, hash]
     );
-    res.status(201).json({ manager_id: lastID, mname, email: email ?? null });
+    res.status(201).json({ manager_id: row.manager_id, mname, email: email ?? null });
   } catch (err) { next(err); }
 }
 
@@ -35,10 +35,10 @@ async function update(req, res, next) {
     const hashedPassword = req.body.password ? bcrypt.hashSync(req.body.password, 10) : null;
     const { changes } = await db.run2(
       `UPDATE Manager
-       SET mname = COALESCE(?,mname),
-           email = COALESCE(?,email),
-           password = COALESCE(?,password)
-       WHERE manager_id = ?`,
+       SET mname    = COALESCE($1, mname),
+           email    = COALESCE($2, email),
+           password = COALESCE($3, password)
+       WHERE manager_id = $4`,
       [req.body.mname ?? null, req.body.email ?? null, hashedPassword, req.params.id]
     );
     if (changes === 0) return res.status(404).json({ error: 'Manager not found' });
@@ -48,7 +48,7 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    const { changes } = await db.run2('DELETE FROM Manager WHERE manager_id = ?', [req.params.id]);
+    const { changes } = await db.run2('DELETE FROM Manager WHERE manager_id = $1', [req.params.id]);
     if (changes === 0) return res.status(404).json({ error: 'Manager not found' });
     res.json({ message: 'Deleted' });
   } catch (err) { next(err); }
