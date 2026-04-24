@@ -9,6 +9,7 @@ export default function ProductCard({ product }) {
   const { user }   = useAuth()
   const { addItem } = useCart()
   const id = product._id || product.id
+  const name = product.name || product.pname || ''
 
   const handleAddCart = async (e) => {
     e.preventDefault()
@@ -30,7 +31,7 @@ export default function ProductCard({ product }) {
         {/* Image */}
         <div className="relative bg-cream-200 aspect-square overflow-hidden">
           {product.image || product.imageUrl
-            ? <img src={product.image || product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            ? <img src={product.image || product.imageUrl} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             : <div className="flex justify-center items-center w-full h-full text-brown-300 text-5xl">📦</div>
           }
           {product.stock === 0 && (
@@ -42,7 +43,7 @@ export default function ProductCard({ product }) {
 
         {/* Info */}
         <div className="p-4">
-          <h3 className="mb-2 font-display font-extrabold text-brown-900 group-hover:text-brown-600 text-sm line-clamp-2 leading-snug transition-colors">{product.name}</h3>
+          <h3 className="mb-2 font-display font-extrabold text-brown-900 group-hover:text-brown-600 text-sm line-clamp-2 leading-snug transition-colors">{name}</h3>
           <div className="flex justify-between items-center">
             <span className="font-display font-extrabold text-brown-900 text-lg">฿{price}</span>
             <button

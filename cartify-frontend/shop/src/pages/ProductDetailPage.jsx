@@ -6,14 +6,28 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { Button, Input, Modal, Spinner, toast } from '../components/UI'
 
+function productName(product) {
+  return product?.name || product?.pname || ''
+}
+
 function toFormState(product) {
   return {
-    name: product?.name || '',
+    name: productName(product),
     description: product?.description || '',
     price: product?.price ?? '',
     stock: product?.stock ?? '',
     category: product?.category || '',
     image: product?.image || product?.imageUrl || '',
+  }
+}
+
+function productPayload(form) {
+  return {
+    ...form,
+    name: form.name,
+    pname: form.name,
+    price: Number(form.price),
+    stock: Number(form.stock),
   }
 }
 
@@ -95,11 +109,7 @@ export default function ProductDetailPage() {
 
     setSaving(true)
     try {
-      const payload = {
-        ...form,
-        price: Number(form.price),
-        stock: Number(form.stock),
-      }
+      const payload = productPayload(form)
       const response = await productsAPI.update(productId, payload)
       setProduct(response.data)
       setForm(toFormState(response.data))
@@ -126,7 +136,7 @@ export default function ProductDetailPage() {
     setAdding(true)
     try {
       await addItem(productId, qty)
-      toast.success(`Added ${product.name} x${qty} to cart`)
+      toast.success(`Added ${productName(product)} x${qty} to cart`)
       return true
     } catch {
       toast.error('Something went wrong')
@@ -160,7 +170,7 @@ export default function ProductDetailPage() {
         <div>
           <div className="mb-3 aspect-square overflow-hidden rounded-2xl bg-cream-200 shadow-card">
             {imageSrc ? (
-              <img src={imageSrc} alt={product.name} className="h-full w-full object-cover" />
+              <img src={imageSrc} alt={productName(product)} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-8xl text-brown-300">P</div>
             )}
@@ -175,7 +185,7 @@ export default function ProductDetailPage() {
               </p>
             )}
             <h1 className="mb-3 font-display font-black text-3xl text-brown-900 leading-tight">
-              {product.name}
+              {productName(product)}
             </h1>
             <p className="font-display font-black text-3xl text-brown-900">
               THB {Number(product.price || 0).toLocaleString('th-TH')}
@@ -193,7 +203,7 @@ export default function ProductDetailPage() {
           </div>
 
           {product.description && (
-            <p className="font-body text-brown-500 text-sm leading-relaxed">{product.description}</p>
+            <p className="whitespace-break-spaces font-body text-brown-500 text-sm leading-relaxed">{product.description}</p>
           )}
 
           {canEditProduct && (
