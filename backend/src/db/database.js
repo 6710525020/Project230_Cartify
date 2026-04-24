@@ -46,11 +46,6 @@ CREATE TABLE IF NOT EXISTS Admin (
   password  TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS Employee (
-  employee_id SERIAL PRIMARY KEY,
-  ename       TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS Customer (
   customer_id  SERIAL PRIMARY KEY,
   cname        TEXT NOT NULL,
@@ -97,14 +92,14 @@ CREATE TABLE IF NOT EXISTS OrderItem (
 CREATE TABLE IF NOT EXISTS Payment (
   payment_id      SERIAL PRIMARY KEY,
   order_id        INTEGER NOT NULL UNIQUE,
-  employee_id     INTEGER,
+  admin_id        INTEGER,
   amount          NUMERIC NOT NULL CHECK (amount >= 0),
   payment_method  TEXT    NOT NULL
                   CHECK (payment_method IN ('cash','credit_card','bank_transfer','promptpay')),
   slip_attachment TEXT,
   payment_date    DATE    NOT NULL DEFAULT CURRENT_DATE,
-  FOREIGN KEY (order_id)    REFERENCES "Order"(order_id)     ON DELETE CASCADE,
-  FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE SET NULL
+  FOREIGN KEY (order_id) REFERENCES "Order"(order_id)  ON DELETE CASCADE,
+  FOREIGN KEY (admin_id) REFERENCES Admin(admin_id)    ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Report (
@@ -145,6 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_order_customer  ON "Order"(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_admin      ON "Order"(admin_id);
 CREATE INDEX IF NOT EXISTS idx_orderitem_order  ON OrderItem(order_id);
 CREATE INDEX IF NOT EXISTS idx_payment_order    ON Payment(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_admin    ON Payment(admin_id);
 CREATE INDEX IF NOT EXISTS idx_report_order     ON Report(order_id);
 CREATE INDEX IF NOT EXISTS idx_cart_customer    ON Cart(customer_id);
 CREATE INDEX IF NOT EXISTS idx_cartitem_cart    ON CartItem(cart_id);
