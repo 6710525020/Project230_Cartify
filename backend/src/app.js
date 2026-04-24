@@ -20,7 +20,6 @@ app.use('/api/payments',  require('./routes/paymentRoutes'));
 app.use('/api/reports',   require('./routes/reportRoutes'));
 app.use('/api/managers',  require('./routes/managerRoutes'));
 app.use('/api/admins',    require('./routes/adminRoutes'));
-app.use('/api/employees', require('./routes/employeeRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/auth',      require('./routes/authRoutes'));
 
