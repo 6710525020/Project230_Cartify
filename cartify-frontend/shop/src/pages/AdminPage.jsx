@@ -30,7 +30,7 @@ function orderKey(order) {
 }
 
 function orderCustomer(order) {
-  return order.shippingAddress?.name || order.cname || order.customer_name || '-'
+  return order.customerName || order.cname || order.customer_name || '-'
 }
 
 function orderCreatedAt(order) {
