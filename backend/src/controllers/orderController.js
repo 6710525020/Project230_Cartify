@@ -33,6 +33,13 @@ async function getPaymentForOrder(orderId) {
   );
 }
 async function enrichOrder(order) {
+  if (!order.cname && order.customer_id) {
+  const customer = await db.get2(
+    'SELECT cname FROM Customer WHERE customer_id = $1',
+    [order.customer_id]
+  );
+  order.cname = customer?.cname || null;
+  }
   const items = await db.all2(
     `SELECT oi.product_id, oi.count, p.pname, p.price
      FROM OrderItem oi
