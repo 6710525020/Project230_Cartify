@@ -47,8 +47,6 @@ async function enrichOrder(order) {
     _id: order.order_id,
     customer_id: order.customer_id,
     customerName: order.cname || null,
-    customerEmail: order.email || null,
-    customerPhone: order.phone_number || null,
     orderDate: order.order_date,
     createdAt: order.order_date,
     status: order.status,
@@ -82,7 +80,7 @@ async function recalcTotal(order_id) {
 async function getAll(req, res, next) {
   try {
     let query = `
-      SELECT o.*, c.cname, c.email, c.phone_number, a.aname
+      SELECT o.*, c.cname, a.aname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
       LEFT JOIN Admin    a ON a.admin_id    = o.admin_id
@@ -110,7 +108,7 @@ async function getAll(req, res, next) {
 async function getOne(req, res, next) {
   try {
     const order = await db.get2(`
-      SELECT o.*, c.cname, c.email, c.phone_number, a.aname
+      SELECT o.*, c.cname, a.aname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
       LEFT JOIN Admin    a ON a.admin_id    = o.admin_id

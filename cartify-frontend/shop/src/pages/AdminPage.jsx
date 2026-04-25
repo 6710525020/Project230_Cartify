@@ -30,18 +30,11 @@ function orderKey(order) {
 }
 
 function orderCustomer(order) {
-  return order.customerName || order.cname || order.customer_name || order.shippingAddress?.name || '-'
+  return order.customerName || order.cname || order.customer_name || '-'
 }
 
 function orderCreatedAt(order) {
   return order.createdAt || order.orderDate || order.order_date || null
-}
-
-function orderItemsSummary(order) {
-  if (!Array.isArray(order.items) || order.items.length === 0) return 'No items'
-  return order.items
-    .map((item) => `${item.name || 'Unnamed product'} x${item.quantity || 0}`)
-    .join(', ')
 }
 
 const ORDER_STATUS_OPTIONS = [
@@ -167,6 +160,7 @@ export default function AdminPage() {
         setCustomers(response.data.customers || response.data || [])
       } else {
         const response = await ordersAPI.getAll({ limit: 100 })
+        console.log('orders data:', response.data)
         setOrders(response.data.orders || response.data || [])
       }
     } catch {
@@ -240,9 +234,7 @@ export default function AdminPage() {
   ))
   const filteredOrders = orders.filter((order) => (
     String(orderKey(order) || '').toLowerCase().includes(normalizedSearch) ||
-    orderCustomer(order).toLowerCase().includes(normalizedSearch) ||
-    String(order.customerEmail || '').toLowerCase().includes(normalizedSearch) ||
-    orderItemsSummary(order).toLowerCase().includes(normalizedSearch)
+    orderCustomer(order).toLowerCase().includes(normalizedSearch)
   ))
 
   return (
@@ -369,24 +361,8 @@ export default function AdminPage() {
                 return (
                   <Tr key={id}>
                     <Td><span className="font-mono text-brown-500 text-xs">#{String(id || '').slice(-8).toUpperCase()}</span></Td>
-                    <Td>
-                      <div className="space-y-1">
-                        <p className="font-display font-bold text-brown-800">{orderCustomer(order)}</p>
-                        <p className="text-brown-500 text-xs">{order.customerEmail || order.shippingAddress?.phone || '-'}</p>
-                      </div>
-                    </Td>
-                    <Td>
-                      <div className="max-w-xs space-y-1">
-                        {order.items?.length ? order.items.slice(0, 2).map((item, index) => (
-                          <p key={`${item.product_id || item.name}-${index}`} className="text-brown-500 text-sm">
-                            {item.name} x{item.quantity}
-                          </p>
-                        )) : <span className="text-brown-300 text-sm">No items</span>}
-                        {(order.items?.length || 0) > 2 && (
-                          <p className="text-brown-400 text-xs">+{order.items.length - 2} more items</p>
-                        )}
-                      </div>
-                    </Td>
+                    <Td><span className="font-display font-bold text-brown-800">{orderCustomer(order)}</span></Td>
+                    <Td><span className="text-brown-500">{order.items?.length || 0} items</span></Td>
                     <Td><span className="font-display font-extrabold text-brown-900">THB {Number(order.total ?? order.total_price ?? 0).toLocaleString('th-TH')}</span></Td>
                     <Td><OrderStatusBadge status={order.status} /></Td>
                     <Td><span className="text-brown-400 text-xs">{createdAt ? new Date(createdAt).toLocaleDateString('th-TH') : '-'}</span></Td>
@@ -451,24 +427,7 @@ export default function AdminPage() {
           <form onSubmit={handleOrderStatusSave} className="flex flex-col gap-4">
             <div className="rounded-2xl bg-cream-200 p-4">
               <p className="font-display font-bold text-brown-800 text-sm">{orderCustomer(orderModal.order)}</p>
-              <p className="mt-1 font-body text-brown-500 text-xs">{orderModal.order.customerEmail || orderModal.order.shippingAddress?.phone || '-'}</p>
               <p className="mt-1 font-body text-brown-500 text-xs">{orderModal.order.shippingAddress?.address || '-'}</p>
-            </div>
-            <div className="rounded-2xl border border-cream-300 bg-white p-4">
-              <p className="mb-3 font-display font-bold text-brown-800 text-sm">Ordered Items</p>
-              <div className="space-y-2">
-                {orderModal.order.items?.length ? orderModal.order.items.map((item, index) => (
-                  <div key={`${item.product_id || item.name}-${index}`} className="flex items-start justify-between gap-3 text-sm">
-                    <div>
-                      <p className="font-body font-semibold text-brown-700">{item.name}</p>
-                      <p className="text-brown-400">Qty: {item.quantity}</p>
-                    </div>
-                    <p className="font-display font-bold text-brown-900">
-                      THB {Number((item.price || 0) * (item.quantity || 0)).toLocaleString('th-TH')}
-                    </p>
-                  </div>
-                )) : <p className="text-brown-400 text-sm">No items found for this order.</p>}
-              </div>
             </div>
             <Select
               label="Order Status"
