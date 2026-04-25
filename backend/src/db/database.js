@@ -169,11 +169,13 @@ async function initDB() {
   const bcrypt = require('bcryptjs');
 
   const adminSeeds = [
-    { aname: 'admin@gmail.com', password: 'admin1234' },
+    { aname: 'admin@gmail.com',  password: 'admin1234' },
+    { aname: 'admin2@gmail.com', password: 'admin1234' },
   ];
 
   const managerSeeds = [
-    { mname: 'Manager1', email: 'manager@gmail.com', password: 'manager1234' },
+    { mname: 'Manager1', email: 'manager@gmail.com',  password: 'manager1234' },
+    { mname: 'Manager2', email: 'manager2@gmail.com', password: 'manager1234' },
   ];
 
   for (const admin of adminSeeds) {
@@ -204,6 +206,24 @@ async function initDB() {
        SET mname = EXCLUDED.mname,
            password = EXCLUDED.password`,
       [manager.mname, manager.email, passwordHash]
+    );
+  }
+
+  const customerSeeds = [
+    { cname: 'สมชาย ใจดี',    email: 'somchai@example.com',   password: 'customer1234', address: '123 ถ.พหลโยธิน แขวงลาดยาว เขตจตุจักร กรุงเทพฯ 10900',  phone_number: '0811111111' },
+    { cname: 'สมหญิง รักไทย', email: 'somying@example.com',   password: 'customer1234', address: '456 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110',  phone_number: '0822222222' },
+    { cname: 'อนุชา แสงทอง',  email: 'anucha@example.com',    password: 'customer1234', address: '789 ถ.นิมมานเหมินทร์ ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200', phone_number: '0833333333' },
+    { cname: 'วิภา ดีงาม',    email: 'wipa@example.com',      password: 'customer1234', address: '321 ถ.ราชดำเนิน ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000',     phone_number: '0844444444' },
+    { cname: 'ธนพล มั่งมี',   email: 'thanaphon@example.com', password: 'customer1234', address: '654 ถ.ท่าแพ ต.ช้างคลาน อ.เมือง จ.เชียงใหม่ 50300',      phone_number: '0855555555' },
+  ];
+
+  for (const customer of customerSeeds) {
+    const passwordHash = bcrypt.hashSync(customer.password, 10);
+    await pool.query(
+      `INSERT INTO Customer (cname, email, password, address, phone_number)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (email) DO NOTHING`,
+      [customer.cname, customer.email, passwordHash, customer.address, customer.phone_number]
     );
   }
 
