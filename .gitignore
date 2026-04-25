@@ -39,8 +39,5 @@ Mac system files
 Windows system files
 Desktop.ini
 
-SQL dump
-*.sql
-
 Coverage
 coverage/
