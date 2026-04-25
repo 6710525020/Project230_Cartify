@@ -108,7 +108,7 @@ async function getAll(req, res, next) {
 async function getOne(req, res, next) {
   try {
     const order = await db.get2(`
-      SELECT o.*, c.cname, a.aname
+      SELECT o.*, c.cname
       FROM "Order" o
       LEFT JOIN Customer c ON c.customer_id = o.customer_id
       LEFT JOIN Admin    a ON a.admin_id    = o.admin_id
