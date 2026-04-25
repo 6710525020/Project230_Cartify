@@ -46,6 +46,7 @@ async function enrichOrder(order) {
     id: order.order_id,
     _id: order.order_id,
     customer_id: order.customer_id,
+    customerName: order.cname || null,
     orderDate: order.order_date,
     createdAt: order.order_date,
     status: order.status,
