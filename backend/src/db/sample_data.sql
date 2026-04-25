@@ -7,12 +7,13 @@ INSERT INTO Manager (mname, email, password) VALUES
 ('Manager2', 'manager2@gmail.com', '$2a$10$exampleHashedPassword4444444444444444444444444');
 
 -- 3. Customer
-INSERT INTO Customer (cname, email, password, address, phone_number) VALUES
-('สมชาย ใจดี',    'somchai@example.com',   '$2a$10$exampleHashedPassword5555555555555555555555555', '123 ถ.พหลโยธิน แขวงลาดยาว เขตจตุจักร กรุงเทพฯ 10900',  '0811111111'),
-('สมหญิง รักไทย', 'somying@example.com',   '$2a$10$exampleHashedPassword6666666666666666666666666', '456 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110',  '0822222222'),
-('อนุชา แสงทอง',  'anucha@example.com',    '$2a$10$exampleHashedPassword7777777777777777777777777', '789 ถ.นิมมานเหมินทร์ ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200', '0833333333'),
-('วิภา ดีงาม',    'wipa@example.com',      '$2a$10$exampleHashedPassword8888888888888888888888888', '321 ถ.ราชดำเนิน ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000',     '0844444444'),
-('ธนพล มั่งมี',   'thanaphon@example.com', '$2a$10$exampleHashedPassword9999999999999999999999999', '654 ถ.ท่าแพ ต.ช้างคลาน อ.เมือง จ.เชียงใหม่ 50300',      '0855555555');
+-- หมายเหตุ : ข้อมมูลส่วนของลูกค้าได้ถูกแอดลงไปแล้วเพื่อไม่ให้เกิดปัญหาซ้ำซ้อนจะขอเขียนเป็น comment ไว้ค่ะ
+-- INSERT INTO Customer (cname, email, password, address, phone_number) VALUES
+-- ('สมชาย ใจดี',    'somchai@example.com',   '$2a$10$exampleHashedPassword5555555555555555555555555', '123 ถ.พหลโยธิน แขวงลาดยาว เขตจตุจักร กรุงเทพฯ 10900',  '0811111111'),
+-- ('สมหญิง รักไทย', 'somying@example.com',   '$2a$10$exampleHashedPassword6666666666666666666666666', '456 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110',  '0822222222'),
+-- ('อนุชา แสงทอง',  'anucha@example.com',    '$2a$10$exampleHashedPassword7777777777777777777777777', '789 ถ.นิมมานเหมินทร์ ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200', '0833333333'),
+-- ('วิภา ดีงาม',    'wipa@example.com',      '$2a$10$exampleHashedPassword8888888888888888888888888', '321 ถ.ราชดำเนิน ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000',     '0844444444'),
+-- ('ธนพล มั่งมี',   'thanaphon@example.com', '$2a$10$exampleHashedPassword9999999999999999999999999', '654 ถ.ท่าแพ ต.ช้างคลาน อ.เมือง จ.เชียงใหม่ 50300',      '0855555555');
 
 -- 4. Product
 -- หมายเหตุ: product_id 2–10 ถูก INSERT ไว้แล้วใน init_database.sql
