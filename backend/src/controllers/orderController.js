@@ -32,7 +32,6 @@ async function getPaymentForOrder(orderId) {
     [orderId]
   );
 }
-ฆ
 async function enrichOrder(order) {
   const items = await db.all2(
     `SELECT oi.product_id, oi.count, p.pname, p.price
