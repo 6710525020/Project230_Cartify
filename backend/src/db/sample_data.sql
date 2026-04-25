@@ -1,10 +1,12 @@
 -- 1. Admin
-INSERT INTO Admin (aname, password) VALUES
-('admin2@gmail.com', '$2a$10$exampleHashedPassword2222222222222222222222222');
+-- หมายเหตุ : ข้อมูลส่วนของ Admin ได้ถูกแอดลงไปแล้วเพื่อไม่ให้เกิดปัญหาซ้ำซ้อนจะขอเขียนเป็น comment ไว้ค่ะ
+-- INSERT INTO Admin (aname, password) VALUES
+-- ('admin1@gmail.com', '$2a$10$exampleHashedPassword2222222222222222222222222');
 
 -- 2. Manager
-INSERT INTO Manager (mname, email, password) VALUES
-('Manager2', 'manager2@gmail.com', '$2a$10$exampleHashedPassword4444444444444444444444444');
+-- หมายเหตุ : ข้อมูลส่วนของ Manager ได้ถูกแอดลงไปแล้วเพื่อไม่ให้เกิดปัญหาซ้ำซ้อนจะขอเขียนเป็น comment ไว้ค่ะ
+-- INSERT INTO Manager (mname, email, password) VALUES
+-- ('Manager2', 'manager2@gmail.com', '$2a$10$exampleHashedPassword4444444444444444444444444');
 
 -- 3. Customer
 -- หมายเหตุ : ข้อมมูลส่วนของลูกค้าได้ถูกแอดลงไปแล้วเพื่อไม่ให้เกิดปัญหาซ้ำซ้อนจะขอเขียนเป็น comment ไว้ค่ะ
@@ -205,8 +207,8 @@ FROM "Order" o WHERE o.order_date = '2026-04-05'
 INSERT INTO Manager_Report (manager_id, report_id) VALUES
 (1, (SELECT report_id FROM Report WHERE report_type = 'delivery_report' AND report_date = '2026-04-02')),
 (1, (SELECT report_id FROM Report WHERE report_type = 'delivery_report' AND report_date = '2026-04-06')),
-(2, (SELECT report_id FROM Report WHERE report_type = 'payment_report'  AND report_date = '2026-04-03')),
-(2, (SELECT report_id FROM Report WHERE report_type = 'payment_report'  AND report_date = '2026-04-06'));
+(30, (SELECT report_id FROM Report WHERE report_type = 'payment_report'  AND report_date = '2026-04-03')),
+(30, (SELECT report_id FROM Report WHERE report_type = 'payment_report'  AND report_date = '2026-04-06'));
 
 -- ตรวจสอบข้อมูล
 SELECT 'Admin'          AS "Table", COUNT(*) AS "Rows" FROM Admin
