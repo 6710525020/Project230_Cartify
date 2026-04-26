@@ -1,17 +1,20 @@
 # 🛒 Cartify
-
 ระบบร้านค้าออนไลน์ที่พัฒนาด้วย React (Vite) และ Express.js + PostgreSQL รองรับการจัดการสินค้า ตะกร้าสินค้า และระบบผู้ใช้งานแบบครบวงจร
 
 ## 👥 รายชื่อสมาชิก
 ชื่อ-สกุล                  รหัสนักศึกษา
 - นางสาวศราสิณี ณ สงขลา    6710525020
 - นางสาวปณิตา ชโนวิทย์      6710525012
-- นายวรเมธ เผ่าสังข์          6710615268
 
 ## 🛠️ เทคโนโลยีที่ใช้
 
 ### Frontend
-- [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- [React](https://react.dev/) + [Vite](https://vitejs.dev/) — UI Framework และ Build Tool
+- [React Router DOM](https://reactrouter.com/) — จัดการ routing ระหว่างหน้า
+- [Axios](https://axios-http.com/) — เรียก REST API ไปที่ Backend
+- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS styling
+- [Recharts](https://recharts.org/) — แสดงกราฟและ chart ใน dashboard
+- [Lucide React](https://lucide.dev/) — Icon library
 
 ### Backend
 - [Node.js](https://nodejs.org/) + [Express.js](https://expressjs.com/)
@@ -29,21 +32,18 @@
 - npm หรือ yarn
 
 ### 1. Clone โปรเจกต์
-
 ```bash
 git clone https://github.com/your-username/cartify.git
 cd cartify
 ```
 
 ### 2. ติดตั้ง Backend
-
 ```bash
 cd backend
 npm install
 ```
 
 สร้างไฟล์ `.env` ในโฟลเดอร์ `backend/` และกำหนดค่าดังนี้:
-
 ```env
 PORT=5000
 DB_HOST=localhost
@@ -55,52 +55,51 @@ JWT_SECRET=your_jwt_secret
 ```
 
 ### 3. ติดตั้ง Frontend
-
 ```bash
 cd ../frontend
 npm install
 ```
 
 สร้างไฟล์ `.env` ในโฟลเดอร์ `frontend/` และกำหนดค่าดังนี้:
-
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
----
-
 ## 🚀 วิธีรันระบบ (Running the Application)
 
 ### รัน Backend
-
 ```bash
 cd backend
-
 # โหมด Production
 npm start
-
 # โหมด Development (auto-reload)
 npm run dev
 ```
-
 Backend จะรันที่ `http://localhost:5000`
 
 ### รัน Frontend
-
 ```bash
 cd frontend
 npm run dev
 ```
-
 Frontend จะรันที่ `http://localhost:5173`
 
----
-
 ## 📁 โครงสร้างโปรเจกต์
-
-```
 cartify/
 ├── backend/
+│   ├── controllers/
+│   │   ├── adminController.js
+│   │   ├── analyticsController.js
+│   │   ├── cartController.js
+│   │   ├── customerController.js
+│   │   ├── managerController.js
+│   │   ├── orderController.js
+│   │   ├── paymentController.js
+│   │   ├── productController.js
+│   │   └── reportController.js
+│   ├── db/
+│   │   └── database.js
+│   ├── routes/
 │   ├── src/
 │   │   └── app.js
 │   ├── package.json
