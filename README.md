@@ -85,6 +85,7 @@ npm run dev
 Frontend จะรันที่ `http://localhost:5173`
 
 ## 📁 โครงสร้างโปรเจกต์
+```
 cartify/
 ├── backend/
 │   ├── controllers/
