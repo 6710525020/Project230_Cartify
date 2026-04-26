@@ -1,5 +1,5 @@
 {
-  "name": "shop-backend",
+  "name": "Cartify-backend",
   "version": "1.0.0",
   "description": "Express + PostgreSQL backend",
   "main": "src/app.js",
